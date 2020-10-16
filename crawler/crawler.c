@@ -24,20 +24,23 @@ int main(void){
 		//char *html1 = webpage_getHTML(wp1);
 		int pos = 0;
  		char *result;
-
 		queue_t *q = qopen();
  		while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
 			if (IsInternalURL(result)){
-				webpage_t* wp = webpage_new(url1, 0, NULL);
+				webpage_t* wp = webpage_new(result, 0, NULL);
 				qput(q,wp);
 			}
 			free(result);	
 		}
-		char *q1 = qget(q);
+		
+		//print the queue
+		webpage_t *q1 = qget(q);
 		while(q1 != NULL){
-			printf("%s\n", q1);
+			printf("%s\n",webpage_getURL(q1));
+			webpage_delete(q1);
 			q1 = qget(q);
 		}
+		qclose(q);
 		webpage_delete(wp1);
 		exit(EXIT_SUCCESS);
 	}
