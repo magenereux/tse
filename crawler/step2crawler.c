@@ -19,24 +19,22 @@ int main(void){
 	printf("hello\n");
 	char *url1 = "https://thayer.github.io/engs50/";
 	webpage_t* wp1 = webpage_new(url1, 0, NULL);
+	//free(url1);
 
 	if (webpage_fetch(wp1)){
 		//char *html1 = webpage_getHTML(wp1);
 		int pos = 0;
  		char *result;
 
-		queue_t *q = qopen();
  		while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
+			printf("Found url: %s ", result);
 			if (IsInternalURL(result)){
-				webpage_t* wp = webpage_new(url1, 0, NULL);
-				qput(q,wp);
+				printf("is internal.\n");
+			}
+			else{
+				printf("is external.\n");			
 			}
 			free(result);	
-		}
-		char *q1 = qget(q);
-		while(q1 != NULL){
-			printf("%s\n", q1);
-			q1 = qget(q);
 		}
 		webpage_delete(wp1);
 		exit(EXIT_SUCCESS);

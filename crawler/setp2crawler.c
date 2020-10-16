@@ -25,24 +25,22 @@ int main(void){
 		int pos = 0;
  		char *result;
 
-		queue_t *q = qopen();
- 		while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
-			if (IsInternalURL(result)){
-				webpage_t* wp = webpage_new(url1, 0, NULL);
-				qput(q,wp);
+ 		while ((pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
+			bool internal = IsInternalURL(result);
+			printf("Found url: %s ", result);
+			if (internal){
+				printf("is internal.\n");
 			}
-			free(result);	
+			else{
+				printf("is external.\n");			
+			}
 		}
-		char *q1 = qget(q);
-		while(q1 != NULL){
-			printf("%s\n", q1);
-			q1 = qget(q);
-		}
-		webpage_delete(wp1);
+		free(result);
+		free(wp1);
 		exit(EXIT_SUCCESS);
 	}
 	else{
-		webpage_delete(wp1);
+		free(wp1);
 		exit(EXIT_FAILURE);
 	}
 }
