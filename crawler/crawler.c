@@ -17,10 +17,10 @@
 
 
 bool searchfn(void *elementURL, const void* searchURL){
-	webpage_t *e = (webpage_t*)elementURL;
+	char *e = (char*)elementURL;
 	char *s = (char*)searchURL;
-	char *eURL = webpage_getURL(e);
-	if(strcmp(eURL,s)==0){
+	//char *eURL = webpage_getURL(e);
+	if(strcmp(e,s)==0){
 		return true;
 	}
 	return false;
@@ -35,25 +35,33 @@ int main(void){
 	if (webpage_fetch(wp1)){
 		int pos = 0;
  		char *result;
-		hashtable_t *h = hopen(30); //ask about size
- 		
-		 while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
+		hashtable_t *h = hopen(30); //make 70 for step 6 ask about size
+		queue_t *q= qopen();
+		
+		while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
 			if (IsInternalURL(result)){
-				webpage_t* wp = webpage_new(result, 0, NULL);
 				if (hsearch(h,searchfn,result,strlen(result))==NULL){
-					int eval =  hput(h,wp,result,strlen(result));
+					webpage_t* wp = webpage_new(result, 0, NULL);
+					int eval =  hput(h,result,result,strlen(result));
+					qput(q,wp);
 					if(eval==0){
 						printf("%s\n",webpage_getURL(wp));
 					}
-				}
-				//webpage_delete(wp);
-			}
-			else{
-				free(result);	
-			}
+				}else
+					free(result);
+			} else
+				free(result);
+		}
+		webpage_t *q1 = qget(q);
+		
+		while(q1 != NULL){
+			printf("%s\n", webpage_getURL(q1));
+			webpage_delete(q1);
+			q1 = qget(q);
 		}
 		
 		webpage_delete(wp1);
+		qclose(q);
 		hclose(h);
 		exit(EXIT_SUCCESS);
 	}
