@@ -10,38 +10,51 @@
  */
 #include <stdio.h>                                    
 #include <stdlib.h>
+#include <string.h>
 #include "webpage.h"
 #include "queue.h"
 #include "hash.h"
 
+
+bool searchfn(void *elementURL, const void* searchURL){
+	webpage_t *e = (webpage_t*)elementURL;
+	char *s = (char*)searchURL;
+	char *eURL = webpage_getURL(e);
+	if(strcmp(eURL,s)==0){
+		return true;
+	}
+	return false;
+}
 
 int main(void){
 	printf("hello\n");
 	char *url1 = "https://thayer.github.io/engs50/";
 	webpage_t* wp1 = webpage_new(url1, 0, NULL);
 
+
 	if (webpage_fetch(wp1)){
-		//char *html1 = webpage_getHTML(wp1);
 		int pos = 0;
  		char *result;
-		queue_t *q = qopen();
- 		while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
+		hashtable_t *h = hopen(30); //ask about size
+ 		
+		 while (( pos = webpage_getNextURL(wp1, pos, &result)) > 0) {
 			if (IsInternalURL(result)){
 				webpage_t* wp = webpage_new(result, 0, NULL);
-				qput(q,wp);
+				if (hsearch(h,searchfn,result,strlen(result))==NULL){
+					int eval =  hput(h,wp,result,strlen(result));
+					if(eval==0){
+						printf("%s\n",webpage_getURL(wp));
+					}
+				}
+				//webpage_delete(wp);
 			}
-			free(result);	
+			else{
+				free(result);	
+			}
 		}
 		
-		//print the queue
-		webpage_t *q1 = qget(q);
-		while(q1 != NULL){
-			printf("%s\n",webpage_getURL(q1));
-			webpage_delete(q1);
-			q1 = qget(q);
-		}
-		qclose(q);
 		webpage_delete(wp1);
+		hclose(h);
 		exit(EXIT_SUCCESS);
 	}
 	else{
