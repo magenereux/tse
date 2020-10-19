@@ -19,13 +19,16 @@
 
 int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 	struct stat st= {0};
-	char* path = (char*)malloc(sizeof(char));
-	//sprintf(path,"~/engs50/tse/pages");
+	char path[260];
+	sprintf(path,"/thayerfs/home/f0034vk/engs50/tse/%s",dirname);
 	
-	if (stat("~/engs50/tse/pages",&st)==-1){ //if unable to get file properties 
-		if (mkdir(dirname, 0700)!=-1){ //make dir
-			sprintf(path,"%s/%d",dirname,id);
-			FILE *fp = fopen(path,"w");
+	if (stat(path,&st)==-1){ //if unable to get file properties 
+		if (mkdir(path,0700)!=-1){ //make dir
+			sprintf(path,"%s/%d",path,id);
+			
+			FILE *fp = fopen(path,"w");//make file 
+			if (access(path,W_OK)!=0)//checks users permission
+				return -1;//file does not exist
 			fprintf(fp,"%s\n",webpage_getURL(pagep));
 			fprintf(fp,"%d\n",webpage_getDepth(pagep));
 			fprintf(fp,"%d\n",webpage_getHTMLlen(pagep));
@@ -33,9 +36,7 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 			fclose(fp);
 		}
 	}
-
-	//if (access(path,W_OK)!=0)
-		//return -1;
+	
 	return 0;
 }
 
