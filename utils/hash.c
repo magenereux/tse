@@ -18,7 +18,7 @@
 #include <string.h>
 #include "queue.h"
 #include "hash.h"
-#include "queue.c"
+
 
 /* 
  * SuperFastHash() -- produces a number between 0 and the tablesize-1.

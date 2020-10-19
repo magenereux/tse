@@ -14,7 +14,30 @@
 #include "webpage.h"
 #include "queue.h"
 #include "hash.h"
+#include <sys/stat.h>
+#include <unistd.h>
 
+int32_t pagesave(webpage_t *pagep, int id, char *dirname){
+	struct stat st= {0};
+	char* path = (char*)malloc(sizeof(char));
+	//sprintf(path,"~/engs50/tse/pages");
+	
+	if (stat("~/engs50/tse/pages",&st)==-1){ //if unable to get file properties 
+		if (mkdir(dirname, 0700)!=-1){ //make dir
+			sprintf(path,"%s/%d",dirname,id);
+			FILE *fp = fopen(path,"w");
+			fprintf(fp,"%s\n",webpage_getURL(pagep));
+			fprintf(fp,"%d\n",webpage_getDepth(pagep));
+			fprintf(fp,"%d\n",webpage_getHTMLlen(pagep));
+			fprintf(fp,"%s\n",webpage_getHTML(pagep));
+			fclose(fp);
+		}
+	}
+
+	//if (access(path,W_OK)!=0)
+		//return -1;
+	return 0;
+}
 
 bool searchfn(void *elementURL, const void* searchURL){
 	char *e = (char*)elementURL;
@@ -33,6 +56,7 @@ int main(void){
 
 
 	if (webpage_fetch(wp1)){
+		pagesave(wp1,1,"pages");
 		int pos = 0;
  		char *result;
 		hashtable_t *h = hopen(30); //make 70 for step 6 ask about size

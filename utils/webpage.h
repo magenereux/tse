@@ -23,6 +23,7 @@ int   webpage_getHTMLlen(const webpage_t *page);
 char *webpage_getURL(const webpage_t *page);
 char *webpage_getHTML(const webpage_t *page);
 
+
 /**************** webpage_new ****************/
 /* Allocate and initialize a new webpage_t structure.
  * Do NOT fetch the html from url; instead, the
