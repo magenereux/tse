@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Notes/
-1
-3323
+https://thayer.github.io/engs50/Notes/search/activity.html
+3
+3515
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Notes/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Notes</title>
+  <title>Activity - Crawler</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Notes/">
+  <link rel="canonical" href="/engs50/Notes/search/activity.html">
 </head>
 
 
@@ -44,36 +44,33 @@ https://thayer.github.io/engs50/Notes/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Notes</h1>
+    <h1 class="post-title">Activity - Crawler</h1>
   </header>
 
   <div class="post-content">
-    <p>A wide variety of examples are available in <a href="/engs50/Examples">examples</a>.</p>
+    <h3 id="goals">Goals</h3>
 
 <ul>
-  <li><a href="intro/">1 - Getting started</a></li>
-  <li><a href="bash1/">2 - The bash shell</a></li>
-  <li><a href="bash2/">3 - The bash shell, continued</a></li>
-  <li><a href="bash3/">4 - Shell scripts with bash</a></li>
-  <li><a href="c1/">5 - Introduction to C</a></li>
-  <li><a href="c2/">6 - C strings and stdio</a></li>
-  <li><a href="memory/">7 - Memory, pointers, and malloc</a></li>
-  <li><a href="malloc/">8 - Malloc and linked lists</a></li>
-  <li><a href="modules/">9 - Modules in C</a></li>
-  <li><a href="makefiles/">10 - Makefiles</a></li>
-  <li><a href="debug/">11 - Debugging with GDB and Valgrind</a></li>
-  <li><a href="git/">12 - Git and Gitlab</a></li>
-  <li><a href="search/">13 - Searching the web</a></li>
-  <li><a href="crawler/">14 - Crawler design</a></li>
-  <li><a href="design/">15 - Software design; Makefiles</a></li>
-  <li><a href="bugs/">16 - Bugs and Testing</a></li>
-  <li><a href="unittest/">17 - Unit Testing</a></li>
-  <li><a href="indexer/">18 - Indexer</a></li>
-  <li><a href="iterators/">19 - Iterators</a></li>
-  <li><a href="cohesion/">20 - Cohesion and coupling; routines and modules</a></li>
-  <li><a href="querier/">21 - Querier, fuzz testing, and expressions</a></li>
-  <li><a href="sockets/">22 - Networking and Socket programming</a></li>
+  <li>to start thinking about a design for the <em>Crawler</em></li>
 </ul>
+
+<h3 id="activity">Activity</h3>
+
+<p>In your group, consider the following informal description of the <strong>Crawler</strong>:</p>
+
+<ul>
+  <li>It takes three parameters: the URL for a web page to use as a starting point (<em>seed</em>) for the crawl, the <em>maximum depth</em> it should crawl from that seed, and the name of a <em>directory</em> where it can cache copies of the web pages it crawls.</li>
+  <li>It should start from a given URL called the <em>seed</em>.
+The web page at that URL is said to be at depth 0.</li>
+  <li>It should <em>explore</em> that URL; that is, it should download the web page at that URL, and scan that page’s HTML for embedded links to URLs.
+(Assume you are given a function that can pick URLs out of HTML.)  When exploring a page at depth <em>d</em>, its embedded URLs refer to pages that are said to be at depth <em>d+1</em>.</li>
+  <li>Ignore URLs that don’t point at HTML.</li>
+  <li>Ignore URLs at depth greater than <em>maxDepth</em>.</li>
+  <li>Explore each non-ignored URL by downloading its HTML and scanning that HTML for URLs, as above.</li>
+  <li>For each page it explores, it should create one file that contains the URL of that page, its depth in the crawl, and the HTML for that page.</li>
+</ul>
+
+<p><strong><em>Discuss how you could structure a crawler to accomplish the above goals – probably two nested loops – and leverage your Lab 3 data structures.</em></strong></p>
 
   </div>
 

@@ -54,7 +54,9 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 bool searchfn(void *elementURL, const void* searchURL){
 	char *e = (char*)elementURL;
 	char *s = (char*)searchURL;
-	if(strcmp(e,s)==0){
+	//char *ecat = strcat(e,"/");
+	//char *scat = strcat(s,"/");
+	if(strcmp(e,s)==0 ){
 		return true;
 	}
 	return false;
@@ -69,61 +71,55 @@ int main(int argc, char* argv[]){ //ask about how to take in arguments (seedURL,
 		printf("usage: crawler <seedURL><pagedir><maxDepth>");
 		return -1;
 	}
-	char *url=argv[1];
+	char *url = (char *)calloc(strlen(argv[1])+1,sizeof(char));
+	strcpy(url,argv[1]);
+	//char *url = argv[1];
 	char *pagedir=argv[2];
 	int maxDepth=atoi(argv[3]);
 	int depth=0;
 
 	//char *url1 = "https://thayer.github.io/engs50/"; // seedURL argument
-	webpage_t *first = webpage_new(url, depth, NULL);
+	webpage_t *first = webpage_new(argv[1], depth, NULL);
 	// need to allocate memory for first strcopy --> then put in hashtable
-	if (webpage_fetch(first)){
-		int id=1;
-		pagesave(first,id,pagedir);
-		int pos = 0;
- 		char *result;
-		hashtable_t *h = hopen(70);
-		queue_t *q= qopen();
-		hput(h,url,url,strlen(url));
-		qput(q,first);
-		webpage_t *wp=first;
-		//pos=webpage_getNextURL(wp,pos,&result);
-		while (webpage_getDepth(wp)<maxDepth) {
-		 
-			while (( pos = webpage_getNextURL(wp, pos, &result)) > 0) {
-				if (IsInternalURL(result)){
-					if (hsearch(h,searchfn,result,strlen(result))==NULL){
-						webpage_t *newwp = webpage_new(result,webpage_getDepth(wp)+1,NULL);
-						id++;
-						webpage_fetch(newwp);
-						pagesave(newwp,id,pagedir);
-						int eval =  hput(h,result,result,strlen(result)); 
-						qput(q,wp);
-						if(eval==0)
-							printf("%s\n",webpage_getURL(newwp));
-					}else
-						free(result);
-				} else
-					free(result);
-			}
-			wp=(webpage_t*)qget(q);
-			//delete each webpage we get
+	
+	 int id=1;
+	 int pos = 0;
+ 	 char *result;
+	 hashtable_t *h = hopen(200);
+	 queue_t *q= qopen();
+	 hput(h,url,url,strlen(url));
+	 qput(q,first);
+	 webpage_t *wp=qget(q);
+
+	 while(wp != NULL){
+		 if (webpage_getDepth(wp)<=maxDepth) {
+			 pos = 0;
+			 if(webpage_fetch(wp)){
+				 pagesave(wp,id,pagedir);
+				 id++;
+				 while (( pos = webpage_getNextURL(wp, pos, &result)) > 0) {
+					 if (IsInternalURL(result)){
+						 if (hsearch(h,searchfn,result,strlen(result))==NULL){
+							 webpage_t *newwp = webpage_new(result,webpage_getDepth(wp)+1,NULL);
+							 int eval =  hput(h,result,result,strlen(result)); 
+							 qput(q,newwp);
+							 if(eval==0)
+								 printf("%s\n",webpage_getURL(newwp));
+						 }else{
+							 free(result);
+						 }
+					 } else{
+						 free(result);
+					 }
+				 }
+			 }
+			 
+		 }
+		 webpage_delete(wp);
+		 wp=(webpage_t*)qget(q);
 		}
-		/*
-		webpage_t *q1 = qget(q);
 		
-		while(q1 != NULL){
-			printf("%s\n", webpage_getURL(q1));
-			webpage_delete(q1);
-			q1 = qget(q);
-			}*/
-		
-		webpage_delete(wp); //might need to be first
 		qclose(q);
 		hclose(h);
 		exit(EXIT_SUCCESS);
-	}
-	else{
-		exit(EXIT_FAILURE);
-	}
 }
