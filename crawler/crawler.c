@@ -14,42 +14,10 @@
 #include "webpage.h"
 #include "queue.h"
 #include "hash.h"
+#include "pageio.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
-int32_t pagesave(webpage_t *pagep, int id, char *dirname){
-	struct stat st= {0};
-	char path[260];
-	sprintf(path,"../%s",dirname);
-
-	if (stat(path,&st)==-1){ //if unable to get file properties 
-		if (mkdir(path,0700)!=-1){ //make dir
-			sprintf(path,"%s/%d",path,id); //now the path to the specific file
-			
-			FILE *fp = fopen(path,"w");//make file 
-			if (access(path,W_OK)!=0)//checks users permission
-				return -1;//file does not exist
-			fprintf(fp,"%s\n",webpage_getURL(pagep));
-			fprintf(fp,"%d\n",webpage_getDepth(pagep));
-			fprintf(fp,"%d\n",webpage_getHTMLlen(pagep));
-			fprintf(fp,"%s\n",webpage_getHTML(pagep));
-			fclose(fp);
-		}
-	} else {
-			sprintf(path,"%s/%d",path,id); //now the path to the specific file
-			
-			FILE *fp = fopen(path,"w");//make file 
-			if (access(path,W_OK)!=0)//checks users permission
-				return -1;//file does not exist
-			fprintf(fp,"%s\n",webpage_getURL(pagep));
-			fprintf(fp,"%d\n",webpage_getDepth(pagep));
-			fprintf(fp,"%d\n",webpage_getHTMLlen(pagep));
-			fprintf(fp,"%s\n",webpage_getHTML(pagep));
-			fclose(fp);
-	}
-	
-	return 0;
-}
 
 bool searchfn(void *elementURL, const void* searchURL){
 	char *e = (char*)elementURL;
