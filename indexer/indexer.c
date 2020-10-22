@@ -18,10 +18,11 @@ int main (void) {
 	webpage_t *wp=pageload(1,"pages");
 	char *word;
 	int pos=webpage_getNextWord(wp,0,&word);
-	printf("pos=%d",pos);
+	// printf("pos=%d",pos);
 	//	int counter=0;
+	FILE *f = fopen("output","w");
 	while (pos!=-1) {
-		printf("%s\n",word);
+		fprintf(f,"%s\n",word);
 		free(word);
 		pos=webpage_getNextWord(wp,pos,&word);
 		//counter++;
