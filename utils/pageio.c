@@ -79,31 +79,18 @@ webpage_t *pageload(int id, char *dirnm) {
 	// gets the URL
   char url[100];
 	fscanf(fp,"%[^\n]",url);
-	printf("url=%s\n",url);
+	//	printf("url=%s\n",url);
 	
 	// gets the depth
-	char dchar[20];
-	fscanf(fp,"%[^\n]",dchar);
-	int depth = atoi(dchar);
-	printf("depth=%d\n",depth);
+	//char dchar[2];
+	int depth;
+	fscanf(fp,"%d",&depth);
+	//int depth = atoi(dchar);
+	//	printf("dchar=%d\n",dchar);
 
-	// gets the HTML length
-	char htmllenchar[4000];
-	fscanf(fp,"%[^\n]",htmllenchar);
-	int htmllen=atoi(htmllenchar);
-
-	// gets the HTML
-	char html[htmllen];
-	int fscanned=0;
-	//int count=0;
-	while (fscanned<htmllen) {
-	fscanned=fscanf(fp,"%c",html);
-	//count++;
-	}
-				//while (fscanf(input,"%s",html) != EOF) {}
-	printf("html=%s\n",html);
-		
-	webpage_t *newpage=webpage_new(url,depth,html);
+	webpage_t *newpage=webpage_new(url,depth,NULL);
+	webpage_fetch(newpage);
+	//	printf("html=%s\n",webpage_getHTML(newpage));
 
   fclose(fp);
 	return newpage;
