@@ -74,20 +74,19 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 webpage_t *pageload(int id, char *dirnm) {
 	char path [260];
 	sprintf(path,"../%s/%d",dirnm,id);
-	FILE *fp=fopen(path,"r");
+	FILE *fp;
+	int htmllen;
+	if((fp=fopen(path,"r")) == NULL)
+		return NULL;
 
-	// gets the URL
   char url[100];
-	fscanf(fp,"%[^\n]",url);
-	//	printf("url=%s\n",url);
-	
-	// gets the depth
-	//char dchar[2];
+	fscanf(fp,%s,url);
 	int depth;
 	fscanf(fp,"%d",&depth);
-	//int depth = atoi(dchar);
-	//	printf("dchar=%d\n",dchar);
+	fscanf(fp,"%d",&htmllen);
 
+	char *buffer = ; /// margot stopped here!!
+	
 	webpage_t *newpage=webpage_new(url,depth,NULL);
 	webpage_fetch(newpage);
 	//	printf("html=%s\n",webpage_getHTML(newpage));
