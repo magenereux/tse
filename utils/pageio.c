@@ -74,23 +74,29 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 webpage_t *pageload(int id, char *dirnm) {
 	char path [260];
 	sprintf(path,"../%s/%d",dirnm,id);
-	FILE *fp;
+	char url[100];
 	int htmllen;
+	int depth;
+	
+	FILE *fp;
 	if((fp=fopen(path,"r")) == NULL)
 		return NULL;
 
-  char url[100];
-	fscanf(fp,%s,url);
-	int depth;
+	fscanf(fp,"%s",url);
 	fscanf(fp,"%d",&depth);
-	fscanf(fp,"%d",&htmllen);
+	fscanf(fp,"%d\n",&htmllen);
 
-	char *buffer = ; /// margot stopped here!!
+	char *buffer = (char*)malloc(htmllen+1); //1 for null character
+	char *bp = buffer;
 	
-	webpage_t *newpage=webpage_new(url,depth,NULL);
-	webpage_fetch(newpage);
-	//	printf("html=%s\n",webpage_getHTML(newpage));
-
+	for (int i=0;i<htmllen;i++,bp++) {
+		*bp=fgetc(fp);
+	}
+	*bp='\0'; //includes the null character that signifies end of string
+	
   fclose(fp);
+	 
+	webpage_t *newpage=webpage_new(url,depth,buffer);
+
 	return newpage;
 }
