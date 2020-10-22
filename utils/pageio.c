@@ -48,7 +48,7 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
 			fprintf(fp,"%d\n",webpage_getDepth(pagep));
 			fprintf(fp,"%d\n",webpage_getHTMLlen(pagep));
 			fprintf(fp,"%s\n",webpage_getHTML(pagep));
-			fclose(fp);
+		fclose(fp);
 		}
 	} else {
 			sprintf(path,"%s/%d",path,id); //now the path to the specific file
@@ -71,4 +71,40 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname){
  *
  * returns: non-NULL for success; NULL otherwise
  */
-webpage_t *pageload(int id, char *dirnm);
+webpage_t *pageload(int id, char *dirnm) {
+	char path [260];
+	sprintf(path,"../%s/%d",dirnm,id);
+	FILE *fp=fopen(path,"r");
+
+	// gets the URL
+  char url[100];
+	fscanf(fp,"%[^\n]",url);
+	printf("url=%s\n",url);
+	
+	// gets the depth
+	char dchar[20];
+	fscanf(fp,"%[^\n]",dchar);
+	int depth = atoi(dchar);
+	printf("depth=%d\n",depth);
+
+	// gets the HTML length
+	char htmllenchar[4000];
+	fscanf(fp,"%[^\n]",htmllenchar);
+	int htmllen=atoi(htmllenchar);
+
+	// gets the HTML
+	char html[htmllen];
+	int fscanned=0;
+	//int count=0;
+	while (fscanned<htmllen) {
+	fscanned=fscanf(fp,"%c",html);
+	//count++;
+	}
+				//while (fscanf(input,"%s",html) != EOF) {}
+	printf("html=%s\n",html);
+		
+	webpage_t *newpage=webpage_new(url,depth,html);
+
+  fclose(fp);
+	return newpage;
+}
