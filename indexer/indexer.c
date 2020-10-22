@@ -16,14 +16,18 @@
 
 int main (void) {
 	webpage_t *wp=pageload(1,"pages");
-	char *word[webpage_getHTMLlen(wp)];
-	int pos=webpage_getNextWord(wp,0,word);
+	char *word;
+	int pos=webpage_getNextWord(wp,0,&word);
 	printf("pos=%d",pos);
 	//	int counter=0;
 	while (pos!=-1) {
-		printf("%s",word[pos]);
-		pos=webpage_getNextWord(wp,pos,word);
+		printf("%s\n",word);
+		free(word);
+		pos=webpage_getNextWord(wp,pos,&word);
 		//counter++;
 	}
+	//iterate through word array, free each, free array
+	
+	webpage_delete(wp);
 	return 0;
 }
