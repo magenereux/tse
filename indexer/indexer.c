@@ -15,16 +15,18 @@
 #include "webpage.h"
 #include "hash.h"
 
-int sum=0;
+static int sum=0;
 
-typedef struct indexed {
+typedef struct wordCount {
 	char *key;
 	int count;
-} indexed_t;
+} wordCount_t;
 
 int NormalizeWord(char *word) {
-	if (strlen(word)<3)
+	if (strlen(word)<3){
+		free(word);
 		return 1;
+	}
 	for (int i=0;i<strlen(word);i++) {
 		if (isalpha(word[i])==0){
 			return 1;
@@ -36,56 +38,66 @@ int NormalizeWord(char *word) {
 }
 
 bool searchfn(void *indx, const void* searchword) {
-	indexed_t *w1=(indexed_t *)indx;
-	//printf("w1=%s\n",w1->key);
+	wordCount_t *w1=(wordCount_t *)indx;
 	char *w2=(char*)searchword;
 	//printf("w2=%s\n",w2);
-	if (strcmp(w1->key,w2)==0)
+	if (strcmp(w1->key,w2)==0){
+		//	printf("%s==%s\n",w1->key,w2);
 		return true;
+	}
+	//printf("%s!=%s\n",w1->key,w2);
 	return false;
+}
+
+void freeWords(void *ip){
+	wordCount_t *p;
+	p = (wordCount_t *)ip;
+	free(p->key);
+	p->key = NULL;
 }
 
 void sumWords(void* ip) {
 	//printf("in sumwords!");
-	sum=sum+((indexed_t*)ip)->count;
-	//printf("%d\n",((indexed_t*)ip)->count);
+	wordCount_t *p;
+	p = (wordCount_t *)ip;
+	sum=sum+p->count;
+	//printf("%s %d %d\n",p->key,p->count,sum);
 }
 
 int main (void) {
 	webpage_t *wp=pageload(1,"pages");
 	char *word;
 	int pos=0;
-	hashtable_t *htp=hopen(webpage_getHTMLlen(wp));
-
+	hashtable_t *htp=hopen(100);
+	
 	while ((pos=webpage_getNextWord(wp,pos,&word))>0) {
 		//printf("word: %s\n",word);
 		if (NormalizeWord(word)==0) {
-			indexed_t *target=(indexed_t*)hsearch(htp,searchfn,word,strlen(word));
-			printf("target: %s\n",(char*)target);
+			//printf("Normalized word: %s\n",word);
+			wordCount_t *target=(wordCount_t*)hsearch(htp,searchfn,word,strlen(word));
 			if (target==NULL) {
-				indexed_t *indx=malloc(sizeof(indexed_t));
-				strcpy(indx->key,word);
-				indx->count=0;
-				hput(htp,indx,word,strlen(word));			
-			} else {
-				target->count=(target->count)+1;
-				//printf("%s\n",target->word);
+				wordCount_t *indx=malloc(sizeof(wordCount_t));
+				//strcpy(indx->key,word);
+				indx->key = word;	
+				//printf("adding: %s\n",word);
+				indx->count=1;
+				//printf("%d\n",indx->count);
+				hput(htp,(void *)indx,word,strlen(word));			
 			}
-		
-		free(word);
+			else {
+				target->count=(target->count)+1;
+				//	printf("found: %s count: %d\n",target->key,target->count);
+				free(word);
+			}
 		}
 	}
-
+	
 	// to print the total sum of counts
+	
 	happly(htp,sumWords);
-				 /*
-	int toAdd=0;
-	for (int i=0;i<counter;i++) {
-		toAdd=htp[i]->count;
-		sum+=toAdd;
-		} */
 	printf("sum: %d\n",sum);
 
+	happly(htp,freeWords);
 	webpage_delete(wp);
 	hclose(htp);
   exit(EXIT_SUCCESS);

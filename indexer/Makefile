@@ -10,6 +10,9 @@ indexer:
 run:
 				./indexer
 
+grind:
+				valgrind --leak-check=full ./indexer
+
 clean:
 				rm -f *.o indexer
 
