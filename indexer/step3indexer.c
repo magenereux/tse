@@ -20,15 +20,8 @@ static int sum=0;
 
 typedef struct wordCount {
 	char *key;
-	queue_t *Docs; //queue of docs that have the word
+	int count;
 } wordCount_t;
-
-//entry in queue of docs
-typedef struct docCount {
-	int DocID;
-	int count;//number of times word occurs in Doc
-} docCount_t;
-
 
 int NormalizeWord(char *word) {
 	if (strlen(word)<3){
@@ -44,92 +37,68 @@ int NormalizeWord(char *word) {
 	}
 	return 0;
 }
+
 bool searchfn(void *indx, const void* searchword) {
 	wordCount_t *w1=(wordCount_t *)indx;
 	char *w2=(char*)searchword;
+	//printf("w2=%s\n",w2);
 	if (strcmp(w1->key,w2)==0){
+		//	printf("%s==%s\n",w1->key,w2);
 		return true;
 	}
+	//printf("%s!=%s\n",w1->key,w2);
 	return false;
 }
-bool searchID(void *indx, const void* searchword) {
-	docCount_t *d1 = (docCount_t*)indx;
-	int* d2=(int*)searchword;
-	if (d1->DocID==*d2){
-		return true;
-	}
-	return false;
-}
+
 void freeWords(void *ip){
 	wordCount_t *p;
 	p = (wordCount_t *)ip;
 	free(p->key);
 	p->key = NULL;
 }
-void sumQueue(void* ip) {
-	docCount_t *d;
-	d = (docCount_t *)ip;
-	sum=sum+d->count;
-}
-//count in docCount struct find pointer and get entry
-void sumWords(void* ip) {
-	wordCount_t *p;
-	queue_t *d;
-	p = (wordCount_t *)ip;
-	d = p->Docs;
-	qapply(d,sumQueue);
-}
 
-void closeQueue(void *ip){
+void sumWords(void* ip) {
+	//printf("in sumwords!");
 	wordCount_t *p;
 	p = (wordCount_t *)ip;
-	qclose(p->Docs);
-	p->Docs=NULL;
+	sum=sum+p->count;
+	//printf("%s %d %d\n",p->key,p->count,sum);
 }
 
 int main (void) {
-	int ID=1;
-	webpage_t *wp=pageload(ID,"pages");
+	webpage_t *wp=pageload(1,"pages");
 	char *word;
 	int pos=0;
 	hashtable_t *htp=hopen(100);
 	//open queue of words in index queue_t *q=qopen();
-	//qput(q,index);
 	while ((pos=webpage_getNextWord(wp,pos,&word))>0) {
+		//printf("word: %s\n",word);
 		if (NormalizeWord(word)==0) {
+			//printf("Normalized word: %s\n",word);
 			wordCount_t *target=(wordCount_t*)hsearch(htp,searchfn,word,strlen(word));
 			if (target==NULL) {
-				//printf("hi");
 				wordCount_t *indx=malloc(sizeof(wordCount_t));
-				docCount_t *dc = malloc(sizeof(docCount_t));
+				//strcpy(indx->key,word);
 				indx->key = word;	
-				indx->Docs=qopen();
-				dc->DocID = ID;
-				dc->count = 1;
-				//printf("%d %d\n",dc->DocID,dc->count);
-				qput(indx->Docs,dc);
-				//docCount_t *targetDoc=qget(indx->Docs);
-				//printf("%d %d\n",targetDoc->DocID,targetDoc->count);
-				hput(htp,(void *)indx,word,strlen(word));
-				//printf("after put\n");		
+				//printf("adding: %s\n",word);
+				indx->count=1;
+				//printf("%d\n",indx->count);
+				hput(htp,(void *)indx,word,strlen(word));			
 			}
 			else {
-				docCount_t *targetDoc=(docCount_t*)qsearch(target->Docs,searchID,&ID);
-				//printf("target ID:%d Count:%d\n",targetDoc->DocID,targetDoc->count);
-				targetDoc->count=(targetDoc->count)+1;
+				target->count=(target->count)+1;
+				//	printf("found: %s count: %d\n",target->key,target->count);
 				free(word);
 			}
 		}
 	}
 	
-//pageload every file in pages>create a hashtable/index of words in file
-//put those entries into queue? 
-
 	// to print the total sum of counts
+	
 	happly(htp,sumWords);
 	printf("sum: %d\n",sum);
+
 	happly(htp,freeWords);
-	happly(htp,closeQueue);
 	webpage_delete(wp);
 	hclose(htp);
   exit(EXIT_SUCCESS);
