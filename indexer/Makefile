@@ -7,12 +7,24 @@ LIBS=-lutils -lcurl
 indexer:
 				gcc $(CFLAGS) indexer.c $(LIBS) -o $@
 
+
+step2indexer:
+				gcc $(CFLAGS) step2indexer.c $(LIBS) -o $@
+
+
+step3indexer:
+				gcc $(CFLAGS) step3indexer.c $(LIBS) -o $@
+
+
+step4indexer:
+				gcc $(CFLAGS) step4indexer.c $(LIBS) -o $@
+
 run:
 				./indexer
 
 grind:
-				valgrind --leak-check=full ./indexer
+				valgrind --leak-check=full ./indexer 3
 
 clean:
-				rm -f *.o indexer
+				rm -f *.o step2indexer step3indexer step4indexer indexer
 
