@@ -4,12 +4,16 @@ LIBS=-lutils -lcurl
 %.o: %.c %.h
 			gcc $(CFLAGS) -c $<
 
+indexiotest:
+			gcc $(CFLAGS) indexiotest.c $(LIBS) -o $@
+
 pageiotest:
-				gcc $(CFLAGS) pageiotest.c $(LIBS) -o $@
+			gcc $(CFLAGS) pageiotest.c $(LIBS) -o $@
+
 
 run:
-				./pageiotest
+				./indexiotest
 
 clean:
-				rm -f *.o pageiotest
+				rm -f *.o pageiotest indexiotest
 
