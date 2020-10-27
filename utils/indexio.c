@@ -1,14 +1,3 @@
-/* indexio.c --- 
- * 
- * 
- * Author: Marguerite Genereux
- * Created: Tue Oct 27 11:26:41 2020 (-0400)
- * Version: 
- * 
- * Description: 
- * 
- */
-#pragma once
 /* 
  * indexio.c --- 
  * 
@@ -23,7 +12,6 @@
 #include <string.h>
 #include <inttypes.h>
 #include <unistd.h>
-#include <webpage.h>
 #include <sys/stat.h>
 #include "hash.h"
 #include "queue.h"
@@ -48,8 +36,8 @@ void docGet(void *p){
 
 void wordGet(void *wordCount){
 	wordCount_t *wc = (wordCount_t*)wordCount;
-	queue_t *dc = (queue_t*)wc->Docs;
-	
+	queue_t *dc = (queue_t*)(wc->Docs);
+	printf("w -> key = %s ", wc->key);
 	fprintf(fp,"%s ", wc->key);
 	qapply(dc,docGet);
 	fprintf(fp,"\n");
@@ -68,7 +56,7 @@ int32_t indexsave(hashtable_t *index, int id, char *dirnm) {
 	struct stat st= {0};
 	char path[260];
 	sprintf(path,"../%s",dirnm); // making page we're working with
-	
+
 	if (stat(path,&st)==-1){ //if unable to get file properties 
 		if (mkdir(path,0700)==-1) //make dir
 			return -1;	
@@ -91,41 +79,45 @@ int32_t indexsave(hashtable_t *index, int id, char *dirnm) {
  */
 
 hashtable_t *indexload(int id, char *dirnm){
-	char path [260];
-	char* key;
-	int docID;
+	char path[260];
+	char* keywordp;
+	char keyword[180];
+	keywordp = keyword;
+	int ID;
 	int count;
-	int i = 0;
-	docCount_t *dc;
-	wordCount_t *wc;
-	hashtable_t *htp;
-  sprintf(path,"../%s/%d",dirnm,id);                                 
+	//docCount_t *dc = NULL;
+	//wordCount_t *wc = NULL;
+	//hashtable_t *index;
+  	sprintf(path,"../%s/%d",dirnm,id);     
+	printf("loading %s\n", path);                            
 	
-  if((fp=fopen(path,"r")) == NULL)                                     
-    return NULL;                                                       
+  	if((fp=fopen(path,"r")) == NULL){
+		printf("unable to open file %s\n",path);
+		return NULL;  
+	  }                                                                                          
 
-	htp = hopen(100);
-  fscanf(fp,"%s",key);
-	wc->key = key;
-	wc->Docs = qopen();
-	for(i;i<??;i++) {
-		fscanf(fp,"%d",&docID);
-		fscanf(fp,"%d\n",&count);
-		dc->docID = docID;
-		dc->count = count;
-		qput(wc->Docs,dc);
+	//index = hopen(100);
+
+  	while ((fscanf(fp,"%s",keywordp))!= 0) {
+		printf("%s ", keywordp);
+		fflush(stdout);
+		//wc->key = keyword;
+		//wc->Docs = qopen();
+		while ((fscanf(fp,"%d%d",&ID, &count))== 2){
+			//dc->DocID = ID;
+			//dc->count = count;
+			//qput(wc->Docs,dc);
+			printf("%d %d ", ID, count);
+			fflush(stdout);
+		}
+		printf("\n");
+		//hput(index,wc,wc->key, strlen(wc->key));
 	}
-	hput(htp,wc);
 
-	hclose(htp);
-  char *buffer = (char*)malloc(htmllen+1); //1 for null character      
-  char *bp = buffer;                                                   
                                                                        
-  for (int i=0;i<htmllen;i++,bp++) {                                   
-    *bp=fgetc(fp);                                                     
-  }                                                                    
-  *bp='\0'; //includes the null character that signifies end of string 
-                                                                       
-  fclose(fp);                          
+  	fclose(fp);
+	//return index;
+	return NULL;
+	                          
 
 }

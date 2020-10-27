@@ -27,7 +27,7 @@
  *
 
  */
-int32_t indexsave(hashtable_t *index, char *dirnm);
+int32_t indexsave(hashtable_t *index, int id, char *dirnm);
 
 /* 
  * indexload -- loads the numbered filename <id> in direcory <dirnm>
