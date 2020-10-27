@@ -96,16 +96,28 @@ hashtable_t *indexload(int id, char *dirnm){
 	int docID;
 	int count;
 	int i = 0;
+	docCount_t *dc;
+	wordCount_t *wc;
+	hashtable_t *htp;
   sprintf(path,"../%s/%d",dirnm,id);                                 
-                                   
+	
   if((fp=fopen(path,"r")) == NULL)                                     
     return NULL;                                                       
-                                                                       
+
+	htp = hopen(100);
   fscanf(fp,"%s",key);
+	wc->key = key;
+	wc->Docs = qopen();
 	for(i;i<??;i++) {
-		fscanf(fp,"%d",&docID);                                              
-		fscanf(fp,"%d\n",&count);                                          
-	}                                              
+		fscanf(fp,"%d",&docID);
+		fscanf(fp,"%d\n",&count);
+		dc->docID = docID;
+		dc->count = count;
+		qput(wc->Docs,dc);
+	}
+	hput(htp,wc);
+
+	hclose(htp);
   char *buffer = (char*)malloc(htmllen+1); //1 for null character      
   char *bp = buffer;                                                   
                                                                        
