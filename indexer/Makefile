@@ -20,7 +20,7 @@ step4indexer:
 				gcc $(CFLAGS) step4indexer.c $(LIBS) -o $@
 
 run:
-				./indexer
+				./indexer 3
 
 grind:
 				valgrind --leak-check=full ./indexer 3

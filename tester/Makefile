@@ -14,6 +14,9 @@ pageiotest:
 run:
 				./indexiotest
 
+grind:
+				valgrind --leak-check=full ./indexiotest
+
 clean:
 				rm -f *.o pageiotest indexiotest
 
