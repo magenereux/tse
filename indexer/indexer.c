@@ -16,6 +16,7 @@
 #include "hash.h"
 #include "queue.h"
 #include "indexio.h"
+#include <dirent.h>
 
 static int sum=0;
 
@@ -89,13 +90,42 @@ void closeQueue(void *ip){
 }
 
 int main (int argc, char* argv[]) {
-	int endID=atoi(argv[1]);
+	if (argc!=3) {                                                                  
+    printf("usage: indexer <pagedir><indexnm>\n");                        
+    return -1;                                                                    
+  }                                                                               
+  if (argv[1]==NULL||argv[2]==NULL||atoi(argv[1])<0) {             
+    printf("usage: indexer <pagedir><indexnm>\n");                        
+    return -1;                                                                    
+  } 
+
+	//queue_t *filename=qopen();
+	char *pagedir = (char *)calloc(strlen(argv[1])+1,sizeof(char));              
+  strcpy(pagedir,argv[1]);
+	char *dirname = (char *)calloc(strlen(argv[1])+1,sizeof(char));
+	strcpy(dirname,argv[2]);
+	int countID=0;
+	struct dirent *de;
+	char path[200];
+	sprintf(path,"../%s",pagedir);
+	DIR *dr= opendir(path);
+	if (dr==NULL)
+		return -1;
+	while ((de=readdir(dr)) !=NULL){
+		//sprintf(path,"%s/%s",path,de->d_name); 
+		if (access(path,W_OK)==0 &&strcmp(de->d_name,"..")!=0 && strcmp(de->d_name,".")!=0){
+			countID++;	
+			//printf("%s\n",de->d_name);
+		}
+	}
+	//printf("%d\n",countID);
+	closedir(dr);
 	char *word;
 	int pos=0;
 	hashtable_t *htp=hopen(100);
-
-	for (int ID=1;ID<=endID;ID++) {
-		webpage_t *wp=pageload(ID,"pages");
+	hashtable_t *ip=hopen(100);
+	for (int ID=1;ID<=countID;ID++) {
+		webpage_t *wp=pageload(ID,pagedir);	
 		while ((pos=webpage_getNextWord(wp,pos,&word))>0) {
 			if (NormalizeWord(word)==0) {
 				wordCount_t *target=(wordCount_t*)hsearch(htp,searchfn,word,strlen(word));
@@ -122,15 +152,20 @@ int main (int argc, char* argv[]) {
 				}
 			}
 		}
+		ip=indexload(ID,pagedir);
+		indexsave(ip,ID,dirname);
+		printf("saved to %s\n",dirname);
 		webpage_delete(wp);
 		pos=0;
 	}
 
 	happly(htp,sumWords);
 	printf("sum: %d\n",sum);
-
+	happly(ip,freeWords);
+	happly(ip,closeQueue);
 	happly(htp,freeWords);
 	happly(htp,closeQueue);
 	hclose(htp);
+	hclose(ip);
   exit(EXIT_SUCCESS);
 }
