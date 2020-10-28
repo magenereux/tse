@@ -87,7 +87,7 @@ hashtable_t *indexload(int id, char *dirnm){
 	int count;
 	//docCount_t *dc = NULL;
 	//wordCount_t *wc = NULL;
-	//hashtable_t *index;
+	hashtable_t *index;
   	sprintf(path,"../%s/%d",dirnm,id);     
 	printf("loading %s\n", path);                            
 	
@@ -96,28 +96,32 @@ hashtable_t *indexload(int id, char *dirnm){
 		return NULL;  
 	  }                                                                                          
 
-	//index = hopen(100);
+	index = hopen(100);
 
-  	while ((fscanf(fp,"%s",keywordp))!= 0) {
+  	while ((fscanf(fp,"%s",keywordp))!= EOF) {
 		printf("%s ", keywordp);
-		fflush(stdout);
-		//wc->key = keyword;
-		//wc->Docs = qopen();
+		//fflush(stdout);
+		wordCount_t *wc = malloc(sizeof(wordCount_t));
+		wc->key = malloc(strlen(keywordp)+1);
+		strcpy(wc->key, keywordp);
+		wc->Docs = qopen();
 		while ((fscanf(fp,"%d%d",&ID, &count))== 2){
-			//dc->DocID = ID;
-			//dc->count = count;
-			//qput(wc->Docs,dc);
+			docCount_t *dc = malloc(sizeof(docCount_t));
+			dc->DocID = ID;
+			dc->count = count;
+			qput(wc->Docs,dc);
 			printf("%d %d ", ID, count);
-			fflush(stdout);
+			//free(dc);
+			//fflush(stdout);
 		}
 		printf("\n");
-		//hput(index,wc,wc->key, strlen(wc->key));
+		hput(index,(void*)wc,keywordp, strlen(keywordp));
+		//free(wc->key);
 	}
 
                                                                        
   	fclose(fp);
-	//return index;
-	return NULL;
+	return index;
 	                          
 
 }
