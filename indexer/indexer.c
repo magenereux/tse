@@ -108,6 +108,7 @@ int main (int argc, char* argv[]) {
 	struct dirent *de;
 	char path[200];
 	sprintf(path,"../%s",pagedir);
+	// if indexnm is supposed to just be a file not directory, don't need until next }
 	DIR *dr= opendir(path);
 	if (dr==NULL)
 		return -1;

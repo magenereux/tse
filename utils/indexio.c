@@ -58,10 +58,12 @@ int32_t indexsave(hashtable_t *index, int id, char *dirnm) {
 	sprintf(path,"../%s",dirnm); // making page we're working with
 
 	if (stat(path,&st)==-1){ //if unable to get file properties 
+	// if indexnm is supposed to just be a file, don't need this next mkdir or sprintf
 		if (mkdir(path,0700)==-1) //make dir
 			return -1;	
 	}
 	sprintf(path,"%s/%d",path,id); //now the path to the specific file
+	// if indexnm just a file, need to check if exists before opening 
 	fp = fopen(path,"w");//make file 
 	if (access(path,W_OK)!=0)//checks users permission
 		return -1;//file does not exist
