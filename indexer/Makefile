@@ -20,10 +20,10 @@ step4indexer:
 				gcc $(CFLAGS) step4indexer.c $(LIBS) -o $@
 
 run:
-				./indexer 3
+				./indexer pages indexnm
 
 grind:
-				valgrind --leak-check=full ./indexer 3
+				valgrind --leak-check=full --show-leak-kinds=all ./indexer pages indexnm
 
 clean:
 				rm -f *.o step2indexer step3indexer step4indexer indexer
