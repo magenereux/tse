@@ -94,7 +94,7 @@ webpage_t *pageload(int id, char *dirnm) {
 	}
 	*bp='\0'; //includes the null character that signifies end of string
 	
-  fclose(fp);
+  	fclose(fp);
 	 
 	webpage_t *newpage=webpage_new(url,depth,buffer);
 

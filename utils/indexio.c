@@ -37,7 +37,7 @@ void docGet(void *p){
 void wordGet(void *wordCount){
 	wordCount_t *wc = (wordCount_t*)wordCount;
 	queue_t *dc = (queue_t*)(wc->Docs);
-	printf("w -> key = %s ", wc->key);
+	//printf("w -> key = %s ", wc->key);
 	fprintf(fp,"%s ", wc->key);
 	qapply(dc,docGet);
 	fprintf(fp,"\n");
@@ -89,7 +89,7 @@ hashtable_t *indexload(int id, char *dirnm){
 	//wordCount_t *wc = NULL;
 	hashtable_t *index;
   	sprintf(path,"../%s/%d",dirnm,id);     
-	printf("loading %s\n", path);                            
+	//printf("loading %s\n", path);                            
 	
   	if((fp=fopen(path,"r")) == NULL){
 		printf("unable to open file %s\n",path);
@@ -99,7 +99,7 @@ hashtable_t *indexload(int id, char *dirnm){
 	index = hopen(100);
 
   	while ((fscanf(fp,"%s",keywordp))!= EOF) {
-		printf("%s ", keywordp);
+		//printf("%s ", keywordp);
 		//fflush(stdout);
 		wordCount_t *wc = malloc(sizeof(wordCount_t));
 		wc->key = malloc(strlen(keywordp)+1);
@@ -110,7 +110,7 @@ hashtable_t *indexload(int id, char *dirnm){
 			dc->DocID = ID;
 			dc->count = count;
 			qput(wc->Docs,dc);
-			printf("%d %d ", ID, count);
+			//printf("%d %d ", ID, count);
 			//free(dc);
 			//fflush(stdout);
 		}

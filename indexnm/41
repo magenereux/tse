@@ -1,0 +1,27 @@
+rm 
+rm 
+rm 
+rm 
+*~ 
+$m:h 
+end 
+fr 
+echo 
+nonomatch 
+m 
+f 
+f 
+f 
+f 
+C 
+a.out 
+*.o 
+#!/bin/csh 
+set 
+set 
+*.dSYM 
+clean 
+(*/Makefile) 
+https://thayer.github.io/engs50/Examples/clean 2 132 
+foreach 
+make 
