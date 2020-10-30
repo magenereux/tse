@@ -32,11 +32,11 @@ bool searchfn(void *elementURL, const void* searchURL){
 
 int main(int argc, char* argv[]){ //ask about how to take in arguments (seedURL, pagedir, maxDepth_
 	if (argc!=4) {
-		printf("usage: crawler <seedURL><pagedir><maxDepth>");
+		printf("usage: crawler <seedURL><pagedir><maxDepth>\n");
 		return -1;
 	}
 	if (argv[1]==NULL||argv[2]==NULL||argv[3]==NULL||atoi(argv[3])<0) {
-		printf("usage: crawler <seedURL><pagedir><maxDepth>");
+		printf("usage: crawler <seedURL><pagedir><maxDepth>\n");
 		return -1;
 	}
 	char *url = (char *)calloc(strlen(argv[1])+1,sizeof(char));
