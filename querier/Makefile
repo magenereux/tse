@@ -9,7 +9,7 @@ query:
 
 
 grind:
-				valgrind --leak-check=full --show-leak-kinds=all ./query
+				valgrind --leak-check=full --show-leak-kinds=all ./query indexnm
 
 clean:
 				rm -f *.o query

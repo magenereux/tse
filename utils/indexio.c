@@ -96,7 +96,7 @@ hashtable_t *indexload(int id, char *dirnm){
 		return NULL;  
 	  }                                                                                          
 
-	index = hopen(100);
+	index = hopen(1);
 
   	while ((fscanf(fp,"%s",keywordp))!= EOF) {
 		//printf("%s ", keywordp);

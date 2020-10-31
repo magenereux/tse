@@ -25,13 +25,7 @@ typedef struct wordCount {
 typedef struct docCount {                                                                        
   int DocID;                                                                                     
   int count;//number of times word occurs in Doc                                                 
-} docCount_t;
-
-typedef struct queryCount {
-	int DocID;
-	int count;
-	int numqueries;
-} queryCount_t;
+} docCount_t;    
 
 bool searchfn(void *indx, const void* searchword) {                              
 	wordCount_t *w1=(wordCount_t *)indx;
@@ -86,14 +80,13 @@ int main(int argc, char* argv[]){
     char input[100];
 		char dir[100]="indexnm";
 		char *dirname=dir;
-		int ID=7;
+		int ID=1;
 		int minimum=0;
-		int numwords=0;
+		int counter=0;
     int invalid=0;
    
     //queue_t *wsearch=qopen();
 		hashtable_t *loadedhtp=indexload(ID,dirname); //ask about indexio hsize
-		queue_t *queried=qopen();
     //prompts user for input,reads string, prints lower case words back
     printf(">");
     while(fgets(input,sizeof(input),stdin)){
@@ -111,35 +104,18 @@ int main(int argc, char* argv[]){
 					}
 					if(invalid==0){
 						if (strlen(word)>=3&&strcmp(word,"and")!=0) {
-							numwords++;
+							counter++;
 							
 							wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word,strlen(word));
 							printf("%s:",target->key);
 							
 							if (target!=NULL) {
-								for (int i=0;i<=ID;i++) {//loops through docs word shows up in in hashtable
-									docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
-									if (targetdoc!=NULL) {// if doc has word
-										printf("targetdoc->DocID:%d\n",targetdoc->DocID);
-										queryCount_t *targetqueried=(queryCount_t*)qsearch(queried,searchID,&i);//checks if in queried queue
-										if (targetqueried==NULL) {//creates new queryCount_t if not already in there
-											//printf("targetqueried->DocID:%d\n",targetqueried->DocID);
-											queryCount_t *qp=malloc(sizeof(queryCount_t));
-											qp->DocID=targetdoc->DocID;
-											qp->count=targetdoc->count;
-											qp->numqueries=1;
-											qput(queried,qp);
-										} else { //if already in queryCount_t incremenets its query count
-											targetqueried->numqueries=(targetqueried->numqueries)+1;
-											printf("docID:%d numqueries:%d\n",targetqueried->DocID,targetqueried->numqueries);
-										}
-										//printf("%d ",targetdoc->count);																					 
-										if (numwords==1) //initializes minumum to first count
-											minimum=targetdoc->count;
-										if (targetdoc->count<minimum)
-											minimum=targetdoc->count;
-									}
-							  }
+								docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&ID);
+								printf("%d ",targetdoc->count);																					 
+								if (counter==1) //initializes minumum to first count
+									minimum=targetdoc->count;
+								if (targetdoc->count<minimum)
+									minimum=targetdoc->count;
 							}
 						}
 					}
@@ -150,7 +126,7 @@ int main(int argc, char* argv[]){
 					printf("[invalid query]\n");
 					invalid=0;
 				}
-			}	
+			}
 			printf("- %d\n",minimum);
 			printf(">");
     }
