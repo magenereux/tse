@@ -25,12 +25,12 @@ typedef struct docCount {
   int DocID;                                                                                     
   int count;//number of times word occurs in Doc                                                 
 } docCount_t;
-
+/*
 typedef struct queryCount {
 	int DocID;
 	int count;
 	int numqueries;
-} queryCount_t;
+} queryCount_t; */
 
 bool searchfn(void *indx, const void* searchword) {                              
 	wordCount_t *w1=(wordCount_t *)indx;
@@ -78,11 +78,78 @@ int parse(char *input,char **word) { //returns limit of array
 	}
 	return i;
 }
+
+
+// }
+// void addDocs(void *ep) {
+// 	// loop through all docCount_t in Docs and add them to the queried queue
+// 	// make all the necessary checks and comparisons with counts
+// 	// 	docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
+// 	if (first word) {
+// 		qp->DocID=targetdoc->DocID;
+// 		qp->count=targetdoc->count;
+// 		qput(queried,qp);
+// 	} else if (current doc exists in queried queue) {
+// 		compare the counts and only keep minimum
+// 	} else if (doc exists in queried queue but not current doc queue) {
+// 		remove the doc in queried queue
+// 	}
+// }
+ 
+void firstWordCase(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unranked) {
+	// case of first word
+	wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[0],strlen(word[0]));	
+	if (target==NULL)
+		return;
+	while (currDoc=qget(target->Docs)!=NULL) {
+		docCount_t *copy=(docCount_t*)malloc(sizeof(docCount_t));
+		copy->key=currDoc->key;
+		copy->Docs=currDoc->Docs;
+		qput(backup,currDoc);
+		qput(unranked,copy);
+	}
+	qconcat(target->Docs,backup);
+	}
+	// case of rest of the words
+	for (int i=1;i<limit;i++) { // rest of the words
+		target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));	
+		restWordCase(target->Docs,unranked);
+	}
+}
+
+void restWordCase(queue_t *hashQueue, queue_t *unranked) {
+	// go through unranked -> check if in hash table queue -> if it's in there, compare and update count if minimum -> if not, delete from unranked (free)
+	docCount_t *currDoc=qget(unranked);
+	while (currDoc!=NULL) { 
+		docCount_t *found = (docCount_t*)qsearch(hashQueue,searchID,currDoc->DocID,strlen(currDoc->DocID))
+		if (found!=NULL) {
+			if (found->count<currDoc->count) {
+				unranked->count=found->count;
+			}
+		} else {
+			qremove(currDoc); //maybe free?
+		}
+		currDoc=qget(unranked);
+	}
+
+}
+
 // only keep track of the minimum count of any of the input words
 // for first word, just add the docs and their counts to the queue
 // for next words, if the doc is already in the queue, just compare counts and keep minimum
 // also need to check if there is a doc in the queue that is not in the current list of docs --> remove it
 // use qget and a backup queue to check for words in queue that aren't in the word's docs
+
+		// for first word, make a copy docCount_t of each docs 
+		// qget the first doc from the word queue and put into the backup queue
+		// use qget from unranked and then place into backup and then concat back
+		//make separate function to check if each doc in unranked is in current queue of docs
+		// if not, then free that doc
+
+		// use qsort on int array of the ranks of each doc --> sorts by ranking from greatest to least
+		// remove from unranked by rank then add back in --> unranked is now ranked
+
+		// for the first word
 
 int main(int argc, char* argv[]){
     char input[100];
@@ -99,20 +166,6 @@ int main(int argc, char* argv[]){
     printf(">");
     while(fgets(input,sizeof(input),stdin)){
 		input[strlen(input)-1]='\0';
-/* 		char *token= strtok(input," ");
-		if (input[0]!= '\n'){
-			while (token!=NULL){
-				char *word=(char*)calloc(strlen(token),sizeof(char));
-				for(int i=0; i<strlen(token);i++){
-					if (isalpha(token[i])==0 && token[i]!='\n'){  
-						invalid=invalid+1;                                                              
-					} else {
-						word[i]=tolower(token[i]);
-					}
-				}
-				if(invalid==0){
-					if (strlen(word)>=3&&strcmp(word,"and")!=0) {
-						numwords++; */
 		if (!validate(input)) {	// case for invalid input
 			printf("Invalid query\n");
 			continue;
@@ -125,34 +178,12 @@ int main(int argc, char* argv[]){
 		char **word=calloc(maxWords,sizeof(char*));
 		int limit=parse(input,word);
 						
-		wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word,strlen(word));
-		//printf("%s:",target->key);
-		
-		if (target!=NULL) {
-			for (int i=0;i<=ID;i++) {//loops through docs word shows up in in hashtable
-				docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
-				if (targetdoc!=NULL) {// if doc has word
-					//printf("targetdoc->DocID:%d\n",targetdoc->DocID);
-					queryCount_t *targetqueried=(queryCount_t*)qsearch(queried,searchID,&i);//checks if in queried queue
-					if (targetqueried==NULL) {//creates new queryCount_t if not already in there
-						//printf("targetqueried->DocID:%d\n",targetqueried->DocID);
-						queryCount_t *qp=malloc(sizeof(queryCount_t));
-						qp->DocID=targetdoc->DocID;
-						qp->count=targetdoc->count;
-						qp->numqueries=1;
-						qput(queried,qp);
-					} else { //if already in queryCount_t increments its query count
-						targetqueried->numqueries=(targetqueried->numqueries)+1;
-						//printf("docID:%d numqueries:%d\n",targetqueried->DocID,targetqueried->numqueries);
-					}
-					//printf("%d ",targetdoc->count);																					 
-					if (numwords==1) //initializes minumum to first count
-						minimum=targetdoc->count;
-					if (targetdoc->count<minimum)
-						minimum=targetdoc->count;
-				}
-			}
-		}
+		queue_t* backup=qopen();
+		queue_t* unranked=qopen();
+
+		firstWordCase(loadedhtp,word,backup,unranked);
+		call anotherfunction
+										 
 		free(word);
 		printf(">");
     }
