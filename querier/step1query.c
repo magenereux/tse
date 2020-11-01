@@ -16,22 +16,13 @@
  #include "hash.h"
  #include "queue.h"
  #include "indexio.h"
-/*
-bool searchfn(void *indx, const void* searchword) {                              
-  wordCount_t *w1=(wordCount_t *)indx;                                           
-  char *w2=(char*)searchword;                                                    
-  if (strcmp(w1->key,w2)==0){                                                    
-    return true;                                                                 
-  }                                                                              
-  return false;                                                                  
-}*/
 
 int main(int argc, char* argv[]){
     char input[100];
     
     int invalid=0;
     //create queue of inputed words search for each word in indexnm
-    queue_t *wsearch=qopen();
+    //queue_t *wsearch=qopen();
     //prompts user for input,reads string, prints lower case words back
     printf(">");
     while(fgets(input,sizeof(input),stdin)){   
@@ -47,8 +38,7 @@ int main(int argc, char* argv[]){
                 }
                 if(invalid==0){
                     printf("putting:%s\n",token);
-                    //if(strcmp(token,"and")!=0 || strcmp(token,"or")!=0)
-                    qput(wsearch,token);
+                    //qput(wsearch,token);
                 }
                 token = strtok(NULL," ");
             }
@@ -60,12 +50,6 @@ int main(int argc, char* argv[]){
         printf(">");
         
     }
-
-    //loads index 
-    //hashtable_t* indx=hopen(100);
-    //indx=indexload(1,"indexnm");
-
-
     printf("\n");
     return 0;
 }

@@ -20,8 +20,7 @@ typedef struct wordCount {
   char *key;                                                                                     
   queue_t *Docs; //queue of docs that have the word                                              
 } wordCount_t;                                                                                   
-                                                                                                 
-//entry in queue of docs                                                                         
+                                                                                                                                                                         
 typedef struct docCount {                                                                        
   int DocID;                                                                                     
   int count;//number of times word occurs in Doc                                                 
@@ -41,6 +40,7 @@ bool searchfn(void *indx, const void* searchword) {
   }                                                                              
   return false;
 }
+
 bool searchID(void *indx, const void* ID) {                                              
 	docCount_t *d1 = (docCount_t*)indx;
   int* d2=(int*)ID;                                                                      
@@ -49,115 +49,114 @@ bool searchID(void *indx, const void* ID) {
   }                                                                                              
   return false;                                                                                         
 }
-void closeQueue(void *ip){                                                                       
-  wordCount_t *p;                                                                                
-  p = (wordCount_t *)ip;                                                                         
-  qclose(p->Docs);                                                                               
-  p->Docs=NULL;                                                                                  
-}
+
 void freeWords(void *ip){                                                                        
   wordCount_t *p;                                                                                
-  p = (wordCount_t *)ip;                                                                         
+  p = (wordCount_t *)ip;                                                                        
   free(p->key);                                                                                  
-  p->key = NULL;                                                                                 
+  p->key = NULL;     
+  qclose(p->Docs);                                                                             
 }    
-/*
-void findingWordinHash(void *ip) {
-	wordCount_t *wc=(wordCount*)ip;
-	wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,token,strlen(token));
-	// print out string here 
+
+bool validate(char *line) {
+	for(int i=0; i<strlen(line);i++){
+		if (isalpha(line[i])==0 && isspace(line[i])==0) 
+			return false;                                                             
+	}
+	return true;
 }
-void findingDocinQueue(void *ep) {
-	docCount_t *dc=(docCount*)ep;
-	int count=targetdoc->count;
-	//docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&ID);//can probably be check if equal to target instead of qsearch
-	printf(" %d",targetdoc->count);
-	if (targetdoc->count < count) 
-	  count=targetdoc->count;
-	printf("- %d",count);
- 
- }
-void loopingThroughWsearch(void *wp) {
-	// loop through each word in wsearch and find it in findingWordinHash
-	// call both finding functions and connect them here
-	
-	}*/
+
+int parse(char *input,char **word) { //returns limit of array
+	char s[2]=" ";
+	char *token=strtok(input,s);
+	int i=0;
+	while (token!=NULL) {
+		NormalizeWord(input);
+		word[i]=token;
+		token=strtok(NULL,s);
+		i++;
+	}
+	return i;
+}
+// only keep track of the minimum count of any of the input words
+// for first word, just add the docs and their counts to the queue
+// for next words, if the doc is already in the queue, just compare counts and keep minimum
+// also need to check if there is a doc in the queue that is not in the current list of docs --> remove it
+// use qget and a backup queue to check for words in queue that aren't in the word's docs
+
 int main(int argc, char* argv[]){
     char input[100];
-		char dir[100]="indexnm";
-		char *dirname=dir;
-		int ID=7;
-		int minimum=0;
-		int numwords=0;
+	char dir[100]="indexnm";
+	char *dirname=dir;
+	int ID=7;
+	int minimum=0;
+	int numwords=0;
     int invalid=0;
    
-    //queue_t *wsearch=qopen();
-		hashtable_t *loadedhtp=indexload(ID,dirname); //ask about indexio hsize
-		queue_t *queried=qopen();
+	hashtable_t *loadedhtp=indexload(ID,dirname);
+	queue_t *queried=qopen();
     //prompts user for input,reads string, prints lower case words back
     printf(">");
     while(fgets(input,sizeof(input),stdin)){
-			input[strlen(input)-1]='\0';
-			char *token= strtok(input," ");
-			if (input[0]!= '\n'){
-				while (token!=NULL){
-					char *word=(char*)calloc(strlen(token),sizeof(char));
-					for(int i=0; i<strlen(token);i++){
-						if (isalpha(token[i])==0 && token[i]!='\n'){  
-							invalid=invalid+1;                                                              
-						} else {
-							word[i]=tolower(token[i]);
-						}
+		input[strlen(input)-1]='\0';
+/* 		char *token= strtok(input," ");
+		if (input[0]!= '\n'){
+			while (token!=NULL){
+				char *word=(char*)calloc(strlen(token),sizeof(char));
+				for(int i=0; i<strlen(token);i++){
+					if (isalpha(token[i])==0 && token[i]!='\n'){  
+						invalid=invalid+1;                                                              
+					} else {
+						word[i]=tolower(token[i]);
 					}
-					if(invalid==0){
-						if (strlen(word)>=3&&strcmp(word,"and")!=0) {
-							numwords++;
-							
-							wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word,strlen(word));
-							printf("%s:",target->key);
-							
-							if (target!=NULL) {
-								for (int i=0;i<=ID;i++) {//loops through docs word shows up in in hashtable
-									docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
-									if (targetdoc!=NULL) {// if doc has word
-										printf("targetdoc->DocID:%d\n",targetdoc->DocID);
-										queryCount_t *targetqueried=(queryCount_t*)qsearch(queried,searchID,&i);//checks if in queried queue
-										if (targetqueried==NULL) {//creates new queryCount_t if not already in there
-											//printf("targetqueried->DocID:%d\n",targetqueried->DocID);
-											queryCount_t *qp=malloc(sizeof(queryCount_t));
-											qp->DocID=targetdoc->DocID;
-											qp->count=targetdoc->count;
-											qp->numqueries=1;
-											qput(queried,qp);
-										} else { //if already in queryCount_t incremenets its query count
-											targetqueried->numqueries=(targetqueried->numqueries)+1;
-											printf("docID:%d numqueries:%d\n",targetqueried->DocID,targetqueried->numqueries);
-										}
-										//printf("%d ",targetdoc->count);																					 
-										if (numwords==1) //initializes minumum to first count
-											minimum=targetdoc->count;
-										if (targetdoc->count<minimum)
-											minimum=targetdoc->count;
-									}
-							  }
-							}
-						}
+				}
+				if(invalid==0){
+					if (strlen(word)>=3&&strcmp(word,"and")!=0) {
+						numwords++; */
+		if (!validate(input)) {	// case for invalid input
+			printf("Invalid query\n");
+			continue;
+		}
+		if (strlen(input)<=1) { // case for empty input
+			printf("> ");
+			continue;
+		}
+		int maxWords=strlen(input)/2; //guess for max length of an input word
+		char **word=calloc(maxWords,sizeof(char*));
+		int limit=parse(input,word);
+						
+		wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word,strlen(word));
+		//printf("%s:",target->key);
+		
+		if (target!=NULL) {
+			for (int i=0;i<=ID;i++) {//loops through docs word shows up in in hashtable
+				docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
+				if (targetdoc!=NULL) {// if doc has word
+					//printf("targetdoc->DocID:%d\n",targetdoc->DocID);
+					queryCount_t *targetqueried=(queryCount_t*)qsearch(queried,searchID,&i);//checks if in queried queue
+					if (targetqueried==NULL) {//creates new queryCount_t if not already in there
+						//printf("targetqueried->DocID:%d\n",targetqueried->DocID);
+						queryCount_t *qp=malloc(sizeof(queryCount_t));
+						qp->DocID=targetdoc->DocID;
+						qp->count=targetdoc->count;
+						qp->numqueries=1;
+						qput(queried,qp);
+					} else { //if already in queryCount_t increments its query count
+						targetqueried->numqueries=(targetqueried->numqueries)+1;
+						//printf("docID:%d numqueries:%d\n",targetqueried->DocID,targetqueried->numqueries);
 					}
-					free(word);
-					token = strtok(NULL," ");
+					//printf("%d ",targetdoc->count);																					 
+					if (numwords==1) //initializes minumum to first count
+						minimum=targetdoc->count;
+					if (targetdoc->count<minimum)
+						minimum=targetdoc->count;
 				}
-				if(invalid>0){
-					printf("[invalid query]\n");
-					invalid=0;
-				}
-			}	
-			printf("- %d\n",minimum);
-			printf(">");
+			}
+		}
+		free(word);
+		printf(">");
     }
-		//qclose(wsearch);
-		happly(loadedhtp,freeWords);                                                                       
-		happly(loadedhtp,closeQueue);
-		hclose(loadedhtp);
-    printf("\n");
+	happly(loadedhtp,freeWords);                                                                       
+	hclose(loadedhtp);
     return 0;
 }
