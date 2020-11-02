@@ -56,10 +56,10 @@ bool searchfn(void *indx, const void* searchword) {
 
 bool searchID(void *indx, const void* ID) {                                              
 	docCount_t *d1 = (docCount_t*)indx;
-  int* d2=(int*)ID;                                                                      
-  if (d1->DocID==*d2){
+  	int* d2=(int*)ID;                                                                      
+  	if (d1->DocID==*d2){
     return true;                                                                                 
-  }                                                                                              
+	}                                                                                              
   return false;                                                                                         
 }
 
@@ -102,7 +102,7 @@ int parse(char *input,char **word) { //returns limit of array
 }
 
 int cmpfunc(const void* a, const void* b) {
-	return(*(int*)b - *(int*)a);
+	return(*(int**)b - *(int**)a);
 }
 
  /* void printQueue(void *ep) {
@@ -115,35 +115,44 @@ int cmpfunc(const void* a, const void* b) {
 	webpage_delete(wp);
 } */
 
- void compareRanks(queue_t *hashQueue, queue_t *unranked, int **rankArray) {
+ int compareRanks(queue_t *hashQueue, queue_t *unranked, int **rankArray, int limit) {
 	// go through unranked -> check if in hash table queue -> if it's in there, compare and update count if minimum -> if not, delete from unranked (free)
+
 	queue_t *backup = qopen();
 	docCount_t *currDoc=qget(unranked);
 	int i=0;
 	while (currDoc!=NULL) { 
-		docCount_t *found = (docCount_t*)qsearch(hashQueue,searchID,&(currDoc->DocID));
-		if (found!=NULL) {
-			if (found->count<currDoc->count) {
-				currDoc->count=found->count;
-			}
-			qput(backup,currDoc); 
-			rankArray[i] = &(currDoc->count);
-			//printf("i=%d, currDoc->count putting %d in rankArray\n",i,*rankArray[i]);
+		if (limit==1) {
+			rankArray[i]=&currDoc->count;
 			i++;
+			continue;
 		} else {
-			free(currDoc);
+			docCount_t *found = (docCount_t*)qsearch(hashQueue,searchID,&(currDoc->DocID));
+			if (found!=NULL) {
+				if (found->count<currDoc->count) {
+					currDoc->count=found->count;
+				}
+				qput(backup,currDoc); 
+				rankArray[i] = &(currDoc->count); // how does it know which doc goes w the rank?
+				printf("i=%d, currDoc->count putting %d in rankArray\n",i,*rankArray[i]);
+				i++;
+			} else {
+				free(currDoc);
+			}
 		}
 		currDoc=qget(unranked);
 	}
 	qconcat(unranked,backup);
-
+	return i;
 }
 
 void rankDocs(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unranked, int limit) {
 	// case of first word
 	wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[0],strlen(word[0]));	
 	docCount_t *currDoc;
-	int *rankArray[limit];
+	int sizeRankArray=0; // find max number of docs in query from first word docs
+	int i;
+	
 	if (target==NULL) {
 		//free everything done before
 		return;
@@ -155,12 +164,17 @@ void rankDocs(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unran
 		copy->DocID = currDoc->DocID;
 		qput(backup,currDoc);
 		qput(unranked,copy);
+		//if (limit==1) {
+			//rankArray[sizeRankArray]=&currDoc->count;
+		//}
+		sizeRankArray++;
 		currDoc=qget(target->Docs);
 	}
 	qconcat(target->Docs,backup);
+	int *rankArray[sizeRankArray];
 
 	// case of rest of the words
-	for (int i=1;i<limit;i++) { // rest of the words
+	for (i=1;i<limit;i++) { // rest of the words
 		target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));
 		if (target==NULL) {
 			qclose(backup);
@@ -168,29 +182,35 @@ void rankDocs(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unran
 			//free everything done before
 			printf("Word not found\n");
 			return;
-		}
-		compareRanks(target->Docs,unranked,rankArray);
+		} 
+		sizeRankArray=compareRanks(target->Docs,unranked,rankArray,limit);
 	}
-	printf("before ranked 0 %d\n",*rankArray[0]);
-	printf("before ranked 1 %d\n",*rankArray[1]);
-	printf("before ranked 2 %d\n",*rankArray[2]);
-	printf("before ranked 3 %d\n",*rankArray[3]);
-	printf("before ranked 4 %d\n",*rankArray[4]);
-	qsort(rankArray,limit,sizeof(int*),cmpfunc);
-	printf("after ranked 0 %d\n",*rankArray[0]);
-	printf("after ranked 1 %d\n",*rankArray[1]);
-	printf("after ranked 2 %d\n",*rankArray[2]);
-	printf("after ranked 3 %d\n",*rankArray[3]);
-	printf("after ranked 4 %d\n",*rankArray[4]);
+	qsort(rankArray,sizeRankArray,sizeof(int*),cmpfunc);
+
+		
+
+	// printf("before ranked 0 %d\n",*rankArray[0]);
+	// printf("before ranked 1 %d\n",*rankArray[1]);
+	// printf("before ranked 2 %d\n",*rankArray[2]);
+	// printf("before ranked 3 %d\n",*rankArray[3]);
+	// printf("before ranked 4 %d\n",*rankArray[4]);
+
+	// printf("after ranked 0 %d\n",*rankArray[0]);
+	// printf("after ranked 1 %d\n",*rankArray[1]);
+	// printf("after ranked 2 %d\n",*rankArray[2]);
+	// printf("after ranked 3 %d\n",*rankArray[3]);
+	// printf("after ranked 4 %d\n",*rankArray[4]);
 	docCount_t *toPrint;
 	char dir[100]="pages";
 	char *dirname=dir;
-	for (int i=0; i<=limit; i++) {
+	i=0;
+	while (i>=0 && i<sizeRankArray) {
 		//printf("ranked  %d\n",*rankArray[i]);
 		toPrint = (docCount_t *)qremove(unranked,searchRank,rankArray[i]);
 		webpage_t *wp=pageload(toPrint->DocID,dirname);  
 		printf("rank: %d doc: %d url: %s\n", toPrint->count, toPrint->DocID, webpage_getURL(wp));
 		webpage_delete(wp);
+		i++;
 	}
 
 
