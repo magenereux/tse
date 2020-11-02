@@ -16,6 +16,10 @@
  #include "hash.h"
  #include "queue.h"
  #include "indexio.h"
+ #include "pageio.h"
+ #include "webpage.h"
+
+
 typedef struct wordCount {                                                                       
   char *key;                                                                                     
   queue_t *Docs; //queue of docs that have the word                                              
@@ -25,12 +29,21 @@ typedef struct docCount {
   int DocID;                                                                                     
   int count;//number of times word occurs in Doc                                                 
 } docCount_t;
-/*
-typedef struct queryCount {
-	int DocID;
-	int count;
-	int numqueries;
-} queryCount_t; */
+
+int NormalizeWord(char *word) {                                                  
+  if (strlen(word)<3){                                                           
+    free(word);                                                                  
+    return 1;                                                                    
+  }                                                                              
+  for (int i=0;i<strlen(word);i++) {                                             
+    if (isalpha(word[i])==0){                                                    
+      return 1;                                                                  
+    } else {                                                                     
+      word[i]=tolower(word[i]);                                                  
+    }                                                                            
+  }                                                                              
+  return 0;                                                                      
+} 
 
 bool searchfn(void *indx, const void* searchword) {                              
 	wordCount_t *w1=(wordCount_t *)indx;
@@ -79,57 +92,82 @@ int parse(char *input,char **word) { //returns limit of array
 	return i;
 }
 
-
-// }
-// void addDocs(void *ep) {
-// 	// loop through all docCount_t in Docs and add them to the queried queue
-// 	// make all the necessary checks and comparisons with counts
-// 	// 	docCount_t *targetdoc=(docCount_t*)qsearch(target->Docs,searchID,&i);
-// 	if (first word) {
-// 		qp->DocID=targetdoc->DocID;
-// 		qp->count=targetdoc->count;
-// 		qput(queried,qp);
-// 	} else if (current doc exists in queried queue) {
-// 		compare the counts and only keep minimum
-// 	} else if (doc exists in queried queue but not current doc queue) {
-// 		remove the doc in queried queue
-// 	}
-// }
- 
-void firstWordCase(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unranked) {
-	// case of first word
-	wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[0],strlen(word[0]));	
-	if (target==NULL)
-		return;
-	while (currDoc=qget(target->Docs)!=NULL) {
-		docCount_t *copy=(docCount_t*)malloc(sizeof(docCount_t));
-		copy->key=currDoc->key;
-		copy->Docs=currDoc->Docs;
-		qput(backup,currDoc);
-		qput(unranked,copy);
-	}
-	qconcat(target->Docs,backup);
-	}
-	// case of rest of the words
-	for (int i=1;i<limit;i++) { // rest of the words
-		target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));	
-		restWordCase(target->Docs,unranked);
-	}
+int cmpfunc(const void* a, const void* b) {
+	return(*(int*)b - *(int*)a);
 }
 
-void restWordCase(queue_t *hashQueue, queue_t *unranked) {
+ /* void printQueue(void *ep) {
+	char dir[100]="pages";
+	char *dirname=dir;
+	docCount_t *ranked = (docCount_t*)ep;
+	//get url & print
+	webpage_t *wp=pageload(ranked->DocID,dirname);  
+	printf("rank: %d doc: %d url: %s\n", ranked->count, ranked->DocID, webpage_getURL(wp));
+	webpage_delete(wp);
+} */
+
+ void compareRanks(queue_t *hashQueue, queue_t *unranked, int i, int **rankArray) {
 	// go through unranked -> check if in hash table queue -> if it's in there, compare and update count if minimum -> if not, delete from unranked (free)
+	queue_t *backup = qopen();
 	docCount_t *currDoc=qget(unranked);
 	while (currDoc!=NULL) { 
-		docCount_t *found = (docCount_t*)qsearch(hashQueue,searchID,currDoc->DocID,strlen(currDoc->DocID))
+		docCount_t *found = (docCount_t*)qsearch(hashQueue,searchID,&(currDoc->DocID));
 		if (found!=NULL) {
 			if (found->count<currDoc->count) {
-				unranked->count=found->count;
+				currDoc->count=found->count;
 			}
+			qput(backup,currDoc); 
+			rankArray[i] = &(currDoc->count);
 		} else {
-			qremove(currDoc); //maybe free?
+			free(currDoc);
 		}
 		currDoc=qget(unranked);
+	}
+	qconcat(unranked,backup);
+
+}
+
+void rankDocs(hashtable_t* loadedhtp,char **word,queue_t *backup, queue_t *unranked, int limit) {
+	// case of first word
+	wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[0],strlen(word[0]));	
+	docCount_t *currDoc;
+	int *rankArray[limit];
+	if (target==NULL) {
+		//free everything done before
+		return;
+	}
+	currDoc=(docCount_t*)qget(target->Docs);
+	while (currDoc != NULL) {
+		docCount_t *copy=(docCount_t*)malloc(sizeof(docCount_t));
+		copy->count = currDoc->count;
+		copy->DocID = currDoc->DocID;
+		qput(backup,currDoc);
+		qput(unranked,copy);
+		currDoc=qget(target->Docs);
+	}
+	qconcat(target->Docs,backup);
+
+	// case of rest of the words
+	for (int i=1;i<limit;i++) { // rest of the words
+		target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));
+		if (target==NULL) {
+			qclose(backup);
+			qclose(unranked);
+			//free everything done before
+			printf("Word not found\n");
+			return;
+		}
+		compareRanks(target->Docs,unranked, i, rankArray);
+	}
+	qsort(rankArray,limit,sizeof(int),cmpfunc);
+	docCount_t *toPrint;
+	char dir[100]="pages";
+	char *dirname=dir;
+	for (int i=0; i<limit; i++) {
+		toPrint = (docCount_t *)qremove(backup,searchID,rankArray[i]);
+		webpage_t *wp=pageload(toPrint->DocID,dirname);  
+		printf("rank: %d doc: %d url: %s\n", toPrint->count, toPrint->DocID, webpage_getURL(wp));
+		webpage_delete(wp);
 	}
 
 }
@@ -156,12 +194,8 @@ int main(int argc, char* argv[]){
 	char dir[100]="indexnm";
 	char *dirname=dir;
 	int ID=7;
-	int minimum=0;
-	int numwords=0;
-    int invalid=0;
    
 	hashtable_t *loadedhtp=indexload(ID,dirname);
-	queue_t *queried=qopen();
     //prompts user for input,reads string, prints lower case words back
     printf(">");
     while(fgets(input,sizeof(input),stdin)){
@@ -181,8 +215,7 @@ int main(int argc, char* argv[]){
 		queue_t* backup=qopen();
 		queue_t* unranked=qopen();
 
-		firstWordCase(loadedhtp,word,backup,unranked);
-		call anotherfunction
+		rankDocs(loadedhtp,word,backup,unranked,limit);
 										 
 		free(word);
 		printf(">");
