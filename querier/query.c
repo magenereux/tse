@@ -20,6 +20,8 @@
  #include "webpage.h"
 
 
+static int rankSize=0;
+
 typedef struct wordCount {                                                                       
   char *key;                                                                                     
   queue_t *Docs; //queue of docs that have the word                                              
@@ -31,7 +33,7 @@ typedef struct docCount {
 } docCount_t;
 
 int NormalizeWord(char *word) {                                                  
-  if (strlen(word)<3){                                                           
+  if ( ((strlen(word) < 3) && (strcmp(word,"or") != 0)) || (strcmp(word,"and") == 0)){                                                           
     free(word);                                                                  
     return 1;                                                                    
   }                                                                              
@@ -105,6 +107,10 @@ int parse(char *input,char **word) { //returns limit of array
 
 int cmpfunc(const void* a, const void* b) {
 	return(*(int*)b - *(int*)a);
+}
+
+void rankArrayCounter(void *unranked){
+	rankSize++;	
 }
 
 int compareRanks(queue_t *hashQueue, queue_t *unranked, int *rankArray, int limit) {
@@ -191,6 +197,55 @@ void rankDocs(hashtable_t* loadedhtp,char **word, int limit) {
 	qclose(unranked);
 }
 
+//add contents of q1 to q2
+void addToQueue(queue_t* q1, queue_t* q2){
+	// curr = qget(q1)
+	// while curr != NULL
+	// --> qput(q2,curr)
+	// --> curr = qget(q1)
+	
+}
+
+void ranking(char* words, hashtable_t* htp, int limit, queue_t* all){
+	queue_t *temp = qopen();
+	int sizeRankArray = 0;
+
+	for (int i=0; i<limit; i++){
+		if (strcmp(words[i],"or") == 0){
+			addToQueue(temp,all);
+			qclose(temp);
+			temp = NULL;
+		}
+		else {
+			wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));
+			if (i==0)
+				qapply(target->Docs,rankArrayCounter);
+			if (target == NULL){
+				qclose(temp);
+				queue_t *temp = qopen();
+				temp = NULL;
+				for (int j = i+1; j<limit; j++){
+					if ((strcmp(word[j],"or")==0)
+						continue;
+					if (j == limit-1)
+						i = limit;
+				}
+			} else if (temp == NULL){
+				addToQueue(target->Docs, temp);
+			} else {
+				int *rankArrayp=(int*)calloc(rankSize,sizeof(int));
+				compareRanks(target->Docs, all, rankArrayp, limit);
+				addToQueue(target->Docs, temp);
+			}
+			
+		}
+	}
+
+	addToQueue(temp,all);
+	//qsort all
+
+}
+
 int main(int argc, char* argv[]){
     char input[100];
 	char dir[100]="indexnm";
@@ -213,7 +268,12 @@ int main(int argc, char* argv[]){
 		char **word=calloc(maxWords,sizeof(char*));
 		int limit=parse(input,word);
 
-		rankDocs(loadedhtp,word,limit);
+		if ( (strcmp(word[0],"and") == 0) || (strcmp(word[0],"or") == 0) || (strcmp(word[limit],"and") == 0) || (strcmp(word[limit],"or") == 0)){
+			printf("invalid query\n");
+			continue;
+		} else {
+			rankDocs(loadedhtp,word,limit);
+		}
 
 		free(word);
 		printf(">");
