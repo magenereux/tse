@@ -33,7 +33,7 @@ typedef struct docCount {
 } docCount_t;
 
 int NormalizeWord(char *word) {                                                  
-  if ( ((strlen(word) < 3) && (strcmp(word,"or") != 0)) || (strcmp(word,"and") == 0)){                                                           
+  if (strlen(word) < 3){                                                           
     free(word);                                                                  
     return 1;                                                                    
   }                                                                              
@@ -112,6 +112,11 @@ int cmpfunc(const void* a, const void* b) {
 void rankArrayCounter(void *unranked){
 	rankSize++;	
 }
+void printQueue(void *ep){
+	docCount_t *element = (docCount_t *)ep;
+	printf("DocID: %d ",element->DocID);
+	printf("count: %d\n",element->count);
+}
 
 int compareRanks(queue_t *hashQueue, queue_t *unranked, int *rankArray, int limit) {
 	// go through unranked -> check if in hash table queue -> if it's in there, compare and update count if minimum -> if not, delete from unranked (free)
@@ -127,6 +132,7 @@ int compareRanks(queue_t *hashQueue, queue_t *unranked, int *rankArray, int limi
 			}
 			qput(backup,currDoc); 
 			rankArray[i] = currDoc->count; 
+			//printf("putting %d in rankArray in i=%d\n",rankArray[i],i);
 			i++;
 		} else {
 			free(currDoc);
@@ -199,17 +205,35 @@ void rankDocs(hashtable_t* loadedhtp,char **word, int limit) {
 
 //add contents of q1 to q2
 void addToQueue(queue_t* q1, queue_t* q2){
-	// curr = qget(q1)
-	// while curr != NULL
-	// --> qput(q2,curr)
-	// --> curr = qget(q1)
-	
+	docCount_t *currDoc;
+	queue_t* backup=qopen();
+	//might have to account for q1 being NULL
+	//printf("in addtoqueue\n");
+	if(q1!=NULL){
+		currDoc=(docCount_t*)qget(q1); //
+		while (currDoc != NULL) {
+			docCount_t *found = (docCount_t*)qsearch(q2,searchID,&(currDoc->DocID));
+			docCount_t *copy=(docCount_t*)malloc(sizeof(docCount_t));
+			if (found!=NULL) {
+				found->count = found->count+currDoc->count; //change rank
+			} else {
+				copy->count= currDoc->count;
+				copy->DocID = currDoc->DocID;
+				qput(backup,currDoc);
+				qput(q2,copy);
+				//free(currDoc);
+			}
+			currDoc=qget(q1);
+		}
+		qconcat(q1,backup);
+	}
 }
 
-void ranking(char* words, hashtable_t* htp, int limit, queue_t* all){
-	queue_t *temp = qopen();
-	int sizeRankArray = 0;
-
+void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
+	queue_t *temp;
+	//int sizeRankArray = 0;
+	int *rankArrayp;
+	//printf("in rank\n");
 	for (int i=0; i<limit; i++){
 		if (strcmp(words[i],"or") == 0){
 			addToQueue(temp,all);
@@ -217,32 +241,64 @@ void ranking(char* words, hashtable_t* htp, int limit, queue_t* all){
 			temp = NULL;
 		}
 		else {
-			wordCount_t *target=(wordCount_t*)hsearch(loadedhtp,searchfn,word[i],strlen(word[i]));
-			if (i==0)
+			//printf("line 237\n");
+			wordCount_t *target=(wordCount_t*)hsearch(htp,searchfn,words[i],strlen(words[i]));
+			if (i==0){ //if first word find how many docs are associated to find rankSize
 				qapply(target->Docs,rankArrayCounter);
-			if (target == NULL){
-				qclose(temp);
-				queue_t *temp = qopen();
-				temp = NULL;
-				for (int j = i+1; j<limit; j++){
-					if ((strcmp(word[j],"or")==0)
-						continue;
-					if (j == limit-1)
-						i = limit;
+				//printf("ranksize %d\n",rankSize);
+				temp=qopen();
+				addToQueue(target->Docs, temp);
+				rankArrayp=(int*)calloc(rankSize,sizeof(int));
+				rankSize=compareRanks(temp,target->Docs, rankArrayp, limit);
+				//printf("when i=0 ranksize %d\n",rankSize);
+				//printf("after qapply i=0\n");
+			}
+			else{
+				if (target == NULL){ //edge case: dont find the word close everything 
+					qclose(temp);
+					queue_t *temp = qopen();
+					for (int j = i+1; j<limit; j++){
+						if (strcmp(words[j],"or")==0)//if 'or' continue going through words
+							continue;
+						if (j == limit-1)//get out of for loop
+							i = limit;
+					}
+				} else if (temp == NULL){ //checks if it exists
+					temp=qopen();//so we assign value qget in addToQueue		
+					//printf("here\n");
+					addToQueue(target->Docs, temp);
+
+				} else {
+					rankArrayp=(int*)calloc(rankSize,sizeof(int));
+					rankSize=compareRanks(temp,target->Docs, rankArrayp, limit);
+					//printf("in else ranksize %d\n",rankSize);
+					addToQueue(target->Docs, temp);
 				}
-			} else if (temp == NULL){
-				addToQueue(target->Docs, temp);
-			} else {
-				int *rankArrayp=(int*)calloc(rankSize,sizeof(int));
-				compareRanks(target->Docs, all, rankArrayp, limit);
-				addToQueue(target->Docs, temp);
 			}
 			
 		}
 	}
-
 	addToQueue(temp,all);
+	qapply(all,printQueue);
+	//printf("before sort\n");
 	//qsort all
+	qsort(rankArrayp,rankSize,sizeof(int),cmpfunc);
+	//printf("after sort\n");
+	docCount_t *toPrint;
+	char dir[100]="pages";
+	char *dirname=dir;
+	int i=0;
+	//printf("ranksize %d\n",rankSize);
+	while (i<rankSize-1) {
+		toPrint = (docCount_t *)qremove(all,searchRank,&rankArrayp[i]);
+		webpage_t *wp=pageload(toPrint->DocID,dirname);  
+		printf("rank: %d doc: %d url: %s\n", toPrint->count, toPrint->DocID, webpage_getURL(wp));
+		webpage_delete(wp);
+		i++;
+		free(toPrint);
+	}
+	free(rankArrayp);
+	qclose(all);
 
 }
 
@@ -267,12 +323,21 @@ int main(int argc, char* argv[]){
 		int maxWords=strlen(input)/2; //guess for max length of an input word
 		char **word=calloc(maxWords,sizeof(char*));
 		int limit=parse(input,word);
-
-		if ( (strcmp(word[0],"and") == 0) || (strcmp(word[0],"or") == 0) || (strcmp(word[limit],"and") == 0) || (strcmp(word[limit],"or") == 0)){
-			printf("invalid query\n");
-			continue;
+		
+		if ( (strcmp(word[0],"and") == 0) || (strcmp(word[0],"or") == 0)){
+			if (limit>1 && ((strcmp(word[limit],"and") == 0) || (strcmp(word[limit],"or") == 0))){
+				printf("invalid query\n");
+				continue;
+			}
+			else{
+				printf("invalid query\n");
+				continue;
+			}
 		} else {
-			rankDocs(loadedhtp,word,limit);
+			
+			queue_t *all = qopen();
+			ranking(word,loadedhtp,limit,all);	
+			//rankDocs(loadedhtp,word,limit);
 		}
 
 		free(word);
