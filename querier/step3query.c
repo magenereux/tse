@@ -87,9 +87,7 @@ bool validate(char *line) {
 	}
 	return true;
 }
-// check for "and" -> take it out and treat normally (unless it's the first or last word)
-// first check for implicit ands or spaces -> take minimum for each word individually 
-// then check for or's -> add the minimums together
+
 int parse(char *input,char **word) { //returns limit of array
 	char s[2]=" ";
 	char *token=strtok(input,s);
