@@ -32,8 +32,8 @@ typedef struct docCount {
   int count;//number of times word occurs in Doc                                                 
 } docCount_t;
 
-int NormalizeWord(char *word) {                                                  
-  if (strlen(word) < 3){                                                           
+int NormalizeWord(char *word) {     
+  if (strlen(word) < 3) {
     free(word);                                                                  
     return 1;                                                                    
   }                                                                              
@@ -41,9 +41,13 @@ int NormalizeWord(char *word) {
     if (isalpha(word[i])==0){                                                    
       return 1;                                                                  
     } else {                                                                     
-      word[i]=tolower(word[i]);                                                  
+      word[i]=tolower(word[i]);
     }                                                                            
-  }                                                                              
+  } 
+  if (strcmp(word,"and")==0) {
+	free (word);
+	return 1;
+  }
   return 0;                                                                      
 } 
 
@@ -142,7 +146,7 @@ int compareRanks(queue_t *hashQueue, queue_t *unranked, int *rankArray, int limi
 	qconcat(unranked,backup);
 	return i;
 }
-
+/*
 void rankDocs(hashtable_t* loadedhtp,char **word, int limit) {
 	queue_t* backup=qopen();
 	queue_t* unranked=qopen();
@@ -202,9 +206,9 @@ void rankDocs(hashtable_t* loadedhtp,char **word, int limit) {
 	free(rankArrayp);
 	qclose(unranked);
 }
-
+*/
 //add contents of q1 to q2
-void addToQueue(queue_t* q1, queue_t* q2){
+void addToQueue(queue_t* q1, queue_t* q2, bool isOr){
 	docCount_t *currDoc;
 	queue_t* backup=qopen();
 	//might have to account for q1 being NULL
@@ -215,7 +219,12 @@ void addToQueue(queue_t* q1, queue_t* q2){
 			docCount_t *found = (docCount_t*)qsearch(q2,searchID,&(currDoc->DocID));
 			docCount_t *copy=(docCount_t*)malloc(sizeof(docCount_t));
 			if (found!=NULL) {
-				found->count = found->count+currDoc->count; //change rank
+				if (isOr) 
+					found->count = found->count+currDoc->count; //change rank
+				else {
+					if (found->count<currDoc->count)
+						currDoc->count=found->count;
+				}
 			} else {
 				copy->count= currDoc->count;
 				copy->DocID = currDoc->DocID;
@@ -234,9 +243,12 @@ void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
 	//int sizeRankArray = 0;
 	int *rankArrayp;
 	//printf("in rank\n");
+	bool isOr;
+
 	for (int i=0; i<limit; i++){
 		if (strcmp(words[i],"or") == 0){
-			addToQueue(temp,all);
+			isOr=1;
+			addToQueue(temp,all,isOr);
 			qclose(temp);
 			temp = NULL;
 		}
@@ -245,18 +257,20 @@ void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
 			wordCount_t *target=(wordCount_t*)hsearch(htp,searchfn,words[i],strlen(words[i]));
 			if (i==0){ //if first word find how many docs are associated to find rankSize
 				qapply(target->Docs,rankArrayCounter);
-				//printf("ranksize %d\n",rankSize);
+				printf("ranksize %d\n",rankSize);
 				temp=qopen();
-				addToQueue(target->Docs, temp);
+				isOr=0;
+				addToQueue(target->Docs, temp,isOr);
 				rankArrayp=(int*)calloc(rankSize,sizeof(int));
-				rankSize=compareRanks(temp,target->Docs, rankArrayp, limit);
-				//printf("when i=0 ranksize %d\n",rankSize);
+				rankSize=compareRanks(target->Docs, temp, rankArrayp, limit); // wouldn't ranksize be the same? why need compareranks?
+				printf("when i=0 ranksize %d\n",rankSize);
 				//printf("after qapply i=0\n");
 			}
 			else{
 				if (target == NULL){ //edge case: dont find the word close everything 
 					qclose(temp);
-					queue_t *temp = qopen();
+					temp = NULL;
+					//queue_t *temp = qopen(); // why do you need to open it back up?
 					for (int j = i+1; j<limit; j++){
 						if (strcmp(words[j],"or")==0)//if 'or' continue going through words
 							continue;
@@ -266,19 +280,24 @@ void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
 				} else if (temp == NULL){ //checks if it exists
 					temp=qopen();//so we assign value qget in addToQueue		
 					//printf("here\n");
-					addToQueue(target->Docs, temp);
+					isOr=0;
+					addToQueue(target->Docs, temp,isOr);
 
 				} else {
-					rankArrayp=(int*)calloc(rankSize,sizeof(int));
-					rankSize=compareRanks(temp,target->Docs, rankArrayp, limit);
-					//printf("in else ranksize %d\n",rankSize);
-					addToQueue(target->Docs, temp);
+					//rankSize=0;
+					//qapply(target->Docs,rankArrayCounter);
+					rankArrayp=(int*)realloc(rankArrayp,rankSize);
+					rankSize=compareRanks(target->Docs, temp, rankArrayp, limit);
+					printf("in else ranksize %d\n",rankSize);
+					isOr=0;
+					addToQueue(target->Docs, temp,isOr);
 				}
 			}
 			
 		}
 	}
-	addToQueue(temp,all);
+	isOr=0;
+	addToQueue(temp,all,isOr);
 	qapply(all,printQueue);
 	//printf("before sort\n");
 	//qsort all
@@ -299,7 +318,7 @@ void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
 	}
 	free(rankArrayp);
 	qclose(all);
-
+	qclose(temp);
 }
 
 int main(int argc, char* argv[]){
