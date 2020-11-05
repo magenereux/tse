@@ -13,14 +13,14 @@
  #include <stdio.h>
  #include <stdlib.h>
  #include <ctype.h>
- #include <dirent.h>
  #include "hash.h"
  #include "queue.h"
  #include "indexio.h"
  #include "pageio.h"
  #include "webpage.h"
 
-FILE *fWritep;
+
+static int rankSize=0;
 
 typedef struct wordCount {                                                                       
   char *key;                                                                                     
@@ -110,6 +110,9 @@ int cmpfunc(const void* a, const void* b) {
 	return(*(int*)b - *(int*)a);
 }
 
+void rankArrayCounter(void *unranked){
+	rankSize++;	
+}
 void printQueue(void *ep){
 	if (ep!=NULL) {
 		docCount_t *element = (docCount_t *)ep;
@@ -121,20 +124,6 @@ void printQueue(void *ep){
 		fscanf(fp,"%s",url);
 		fclose(fp);
 		printf("rank:%d doc:%d url:%s\n",element->count,element->DocID,url);
-	}
-}
-
-void quietPrintQueue(void *ep){
-	if (ep!=NULL) {
-		docCount_t *element = (docCount_t *)ep;
-		char *dirname="../pages";
-		char filename[100];
-		sprintf(filename,"%s/%d",dirname,element->DocID);
-		char url[100];
-		FILE *fp=fopen(filename,"r");
-		fscanf(fp,"%s",url);
-		fclose(fp);
-		fprintf(fWritep,"rank:%d doc:%d url:%s\n",element->count,element->DocID,url);
 	}
 }
 
@@ -252,79 +241,30 @@ void ranking(char** words, hashtable_t* htp, int limit, queue_t* all){
 }
 
 int main(int argc, char* argv[]){
-	bool qflag=0;
-	char *readFile;
-	char *writeFile;
-
-	if (argc==6 && strcmp(argv[3],"-q")==0) {
-		qflag=1;
-		readFile=argv[4];
-		writeFile=argv[5];
-	} else if (argc!=3) {
-		printf("usage: querier <pagedir> <indexfile> [-q]\n");
-		return -1;
-	} 
-	if (argv[1]==NULL||argv[2]==NULL) {
-		printf("usage: querier <pagedir> <indexfile> [-q]\n");
-		return -1;
-	}
-
-	char *pagedir=argv[1];
-	char *dirname=argv[2];
-	int countID=0;
-	struct dirent *de;
-	char path[300];
-	sprintf(path,"../%s",pagedir);
-	DIR *dr=opendir(path);
-	if (dr==NULL)
-		return -1;
-	while ((de=readdir(dr))!=NULL) {
-		if (strcmp(de->d_name,"..")!=0&&strcmp(de->d_name,".")!=0) {
-			countID++;
-		}
-	}
-	closedir(dr);
-
-	hashtable_t *loadedhtp=indexload(countID,dirname);
-	char input[100];
-	FILE *fp=stdin;
-	FILE *fReadp;
-
-    if (qflag) {
-		fReadp=fopen(readFile,"r");
-		fWritep=fopen(writeFile,"w");
-		fp=fReadp;
-	}
-	
-	if (!qflag)
-		printf(">"); //prompts user for input,reads string, prints lower case words back
-	while(fgets(input,sizeof(input),fp)){
+    char input[100];
+	char dir[100]="indexnm";
+	char *dirname=dir;
+	int ID=7;
+   
+	hashtable_t *loadedhtp=indexload(ID,dirname);
+    printf(">"); //prompts user for input,reads string, prints lower case words back
+    while(fgets(input,sizeof(input),stdin)){
 		input[strlen(input)-1]='\0';
 		if (!validate(input)) {	// case for invalid input
-			if (qflag) {
-				fprintf(fWritep,"Invalid query\n");
-			} else {
-				printf("Invalid query\n");
-			}
+			printf("Invalid query\n");
 			continue;
 		}
 		if (strlen(input)<=1) { // case for empty input
-			if (!qflag)
-				printf(">");
+			printf("> ");
 			continue;
 		}
 		int maxWords=strlen(input)/2; //guess for max length of an input word
 		char **word=calloc(maxWords,sizeof(char*));
 		int limit=parse(input,word);
 		if (limit<0) {
-			if (qflag) {
-				fprintf(fWritep,"Invalid query\n");
-			} else {
-				printf("Invalid query\n");
-			}
+			printf("Invalid query\n");
 			free(word);
-			if (!qflag)
-				printf(">");
+			printf(">");
 			continue;
 		}
 			
@@ -332,30 +272,14 @@ int main(int argc, char* argv[]){
 		ranking(word,loadedhtp,limit,all);	
 		int ret=sort(all);
 		if (ret<0) {
-			if (qflag) {
-				fprintf(fWritep,"No result\n");
-			} else {
-				printf("No result\n");
-			}
+			printf("No result\n");
 		}
-		if (qflag)
-			qapply(all,quietPrintQueue);
-		else 
-			qapply(all,printQueue);
+		qapply(all,printQueue);
 
 		free(word);
 		qclose(all);
-		if (!qflag)
-			printf(">");
-		else {
-			fprintf(fWritep,"\n");
-		}
-
-	}
-	if (qflag) {
-		fclose(fReadp);
-		fclose(fWritep);
-	}
+		printf(">");
+    }
 
 	happly(loadedhtp,freeWords);                                                                       
 	hclose(loadedhtp);

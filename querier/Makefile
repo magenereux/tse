@@ -17,7 +17,7 @@ step3query:
 				gcc $(CFLAGS) step3query.c $(LIBS) -o $@
 
 grind:
-				valgrind --leak-check=full --show-leak-kinds=all ./query
+				valgrind --leak-check=full --show-leak-kinds=all ./query pages indexnm -q good-queries.txt myoutput
 
 clean:
 				rm -f *.o query step1query step2query step3query

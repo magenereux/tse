@@ -34,21 +34,22 @@ queue_t* qopen(void) {
 }                                                                               
                                                                                   
 /* deallocate a queue, frees everything in it */                                
-void qclose(queue_t *qp) {       
-  queueStruct_t *qsp=(queueStruct_t*)qp;                                        
-  node_t *f=qsp->front;       
-
-  if (f != NULL) {
-    for (node_t *p=qsp->front;p!=NULL;) {                                         
-      if (p != NULL && p->data != NULL) {
-        free(p->data);
-      }                                                            
-        f=p->next;
-        free(p);                                                                    
-        p=f;                                                                        
-    }  
-  }       
-  free(qsp);                                                                    
+void qclose(queue_t *qp) {   
+  if (qp!=NULL) {
+    queueStruct_t *qsp=(queueStruct_t*)qp;                                        
+    node_t *f=qsp->front;    
+    if (f != NULL) {
+      for (node_t *p=qsp->front;p!=NULL;) {                                         
+        if (p != NULL && p->data != NULL) {
+          free(p->data);
+        }                                                            
+          f=p->next;
+          free(p);                                                                    
+          p=f;                                                                        
+      }  
+    }       
+    free(qsp);   
+  }                                                                 
 }                                                                               
                                                                                 
 /* put element at the end of the queue                                          
@@ -75,17 +76,20 @@ int32_t qput(queue_t *qp, void *elementp) { // need to malloc for each node
 }                                                                               
                                                                                 
 /* get the first first element from queue, removing it from the queue */        
-void* qget(queue_t *qp) {                                                       
-  queueStruct_t *qsp=(queueStruct_t*)qp;                                        
-	if (qsp->front == NULL)
-		return NULL;
-	void* first=qsp->front->data;                                                        
-	node_t* tmp=qsp->front;
-	qsp->front=qsp->front->next;
-	if (qsp->front == NULL)
-		qsp->back = NULL;
-	free(tmp);
-	return first;                     
+void* qget(queue_t *qp) {    
+  if (qp!=NULL) {
+    queueStruct_t *qsp=(queueStruct_t*)qp;                                        
+    if (qsp->front == NULL)
+      return NULL;
+    void* first=qsp->front->data;                                                        
+    node_t* tmp=qsp->front;
+    qsp->front=qsp->front->next;
+    if (qsp->front == NULL)
+      qsp->back = NULL;
+    free(tmp);
+    return first;                     
+  }                                                   
+
 }                                                                               
                                                                                 
 /* apply a function to every element of the queue */                            
