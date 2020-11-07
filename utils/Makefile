@@ -1,5 +1,5 @@
 CFLAGS= -Wall -pedantic -std=c11 -g
-OFILES=queue.o hash.o webpage.o pageio.o indexio.o
+OFILES=queue.o hash.o webpage.o pageio.o indexio.o lqueue.o
 
 %.o: %.c %.h
 		gcc $(CFLAGS) -c $<

@@ -77,18 +77,22 @@ int32_t qput(queue_t *qp, void *elementp) { // need to malloc for each node
                                                                                 
 /* get the first first element from queue, removing it from the queue */        
 void* qget(queue_t *qp) {    
+  void* first;
   if (qp!=NULL) {
     queueStruct_t *qsp=(queueStruct_t*)qp;                                        
     if (qsp->front == NULL)
       return NULL;
-    void* first=qsp->front->data;                                                        
+    first=qsp->front->data;                                                        
     node_t* tmp=qsp->front;
     qsp->front=qsp->front->next;
     if (qsp->front == NULL)
       qsp->back = NULL;
-    free(tmp);
-    return first;                     
-  }                                                   
+    free(tmp);                   
+  } 
+  else {
+      first=NULL;
+  }
+  return first;                                        
 
 }                                                                               
                                                                                 
