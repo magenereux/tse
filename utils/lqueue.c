@@ -14,6 +14,11 @@
 #include <stdio.h>
 #include <pthread.h>  
 
+// testing: first play around with creating and working with threads
+// then make small queues and check that single and double threads have same output
+// same for hash
+// step 3: then try on crawler and check to run time differences
+
 typedef struct lqueueStruct {                                                                                                                              
   queue_t *q;   
   pthread_mutex_t lock;                                                         
