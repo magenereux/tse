@@ -30,6 +30,8 @@ lqueue_t* lqopen(void) {
     if ((lqp = (lqueueStruct_t *)malloc(sizeof(lqueueStruct_t)))==NULL){
         return NULL;
     }
+    //intialize mutex
+    pthread_mutex_init(&(lqp->lock),NULL);
     pthread_mutex_lock(&(lqp->lock));
     (lqp->q)= qopen();
     pthread_mutex_unlock(&(lqp->lock));
@@ -43,12 +45,14 @@ void lqclose(lqueue_t *qp) {
         pthread_mutex_lock(&(lqp->lock));
         qclose(lqp->q);
         pthread_mutex_unlock(&(lqp->lock));
+        pthread_mutex_destroy(&(lqp->lock));
+        free(lqp);
     }
 }
 
 
 int32_t lqput(lqueue_t *qp, void *elementp) {
-    if (qp!=NULL){
+    if (qp==NULL || elementp==NULL){
         return -1;
     }
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp;
