@@ -13,6 +13,7 @@
 #include <stdlib.h>                                                             
 #include <stdio.h>
 #include <pthread.h>  
+#include <unistd.h>
 
 // testing: first play around with creating and working with threads
 // then make small queues and check that single and double threads have same output
@@ -32,9 +33,7 @@ lqueue_t* lqopen(void) {
     }
     //intialize mutex
     pthread_mutex_init(&(lqp->lock),NULL);
-    pthread_mutex_lock(&(lqp->lock));
     (lqp->q)= qopen();
-    pthread_mutex_unlock(&(lqp->lock));
     return (lqueue_t*)lqp;
 }
 
@@ -80,25 +79,32 @@ void lqapply(lqueue_t *qp, void (*fn)(void* elementp)) {
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
     pthread_mutex_lock(&(lqp->lock));
     qapply(lqp->q,fn);
+    sleep(10);
     pthread_mutex_unlock(&(lqp->lock));
-    }    
+}    
 
-void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp) {           
-    lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
-    pthread_mutex_lock(&(lqp->lock));
-    lqp = (lqueue_t*)qsearch(lqp->q,searchfn,skeyp);
-    pthread_mutex_unlock(&(lqp->lock));
-    return lqp;
+void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp) {     
+    if (qp!=NULL){
+        lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
+        pthread_mutex_lock(&(lqp->lock));
+        void* data = qsearch(lqp->q,searchfn,skeyp);
+        pthread_mutex_unlock(&(lqp->lock));
+        return data;
+    }
+    return NULL;
 }
 
 void* lqremove(lqueue_t *qp,                                                      
               bool (*searchfn)(void* elementp,const void* keyp),                
               const void* skeyp) {  
-    lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
-    pthread_mutex_lock(&(lqp->lock));
-    lqp = (lqueue_t*)qremove(lqp->q,searchfn,skeyp);
-    pthread_mutex_unlock(&(lqp->lock));
-    return lqp;
+    if (qp!=NULL){
+        lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
+        pthread_mutex_lock(&(lqp->lock));
+        void* data = qremove(lqp->q,searchfn,skeyp);
+        pthread_mutex_unlock(&(lqp->lock));
+        return data;
+    }
+    return NULL;
     
 }
 
