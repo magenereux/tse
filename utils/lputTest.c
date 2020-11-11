@@ -4,6 +4,7 @@
 #include <stdio.h> 
 #include <string.h> 
 #include <pthread.h>  
+#include <unistd.h>
 
 #define MAXREG 10
 #define NUM_THREADS 1
@@ -13,61 +14,53 @@ typedef struct muffin {
     int expdate;
 }muffin_t;
 
-typedef struct args {
-    lqueue_t *lq;
-    muffin_t *mp;
-} arg_t;
-
-void* thread_putFunction(void *lqpArgs){
-    arg_t *lArg = (arg_t*)lqpArgs;
-    lqput(lArg->lq,lArg->mp);
-    return lqpArgs;
-}
-
-int main (void){
+void* thread_putFunction(lqueue_t *lqp){
     muffin_t *muffin1=malloc(sizeof(muffin_t));
     strcpy(muffin1->flavor,"blueberry");
     muffin1->price=5.00;
     muffin1->expdate=202012;
+    lqput(lqp,muffin1);
+    return lqp;
+}
+
+void* thread_getFunction(lqueue_t *lqp){
+    sleep(5);
+    // won't work, thread 1 will be busy --> will wait until sleep(10) in put is over -> then gets
+    muffin_t *data;
+    while (1) {
+        data=lqget(lqp);
+        if (data != NULL) {
+            printf("%s element gotten\n",data->flavor);
+            free(data);
+            break;
+        } 
+    }
+    return lqp;
+}
+
+int main (void){
 
     lqueue_t *lqp= lqopen();
     pthread_t thrd1,thrd2;
 
-    arg_t *lqpArgs=malloc(sizeof(arg_t));
-    lqpArgs->lq = lqp;
-    lqpArgs->mp = muffin1;
-
-    if(pthread_create(&thrd1,NULL,thread_putFunction,(void*)lqpArgs)!=0){
-        printf("FAILURE: lqput did not work\n");
+    if(pthread_create(&thrd1,NULL,thread_putFunction,lqp)!=0){ 
+        printf("FAILURE: thread 1 did not create\n");
         lqclose(lqp);
         pthread_exit(NULL);
         exit(EXIT_FAILURE);
     }
-    printf("SUCESS:Thread 1 lqput worked\n");
+    printf("SUCESS:Thread 1 created\n");
 
-    muffin_t *muffin2=malloc(sizeof(muffin_t));
-    strcpy(muffin1->flavor,"pumpkin");
-    muffin1->price=4.00;
-    muffin1->expdate=202016;
-
-    arg_t *lqpArgs2=malloc(sizeof(arg_t));
-    lqpArgs2->lq = lqp;
-    lqpArgs2->mp = muffin2;
-    if(pthread_create(&thrd2,NULL,thread_putFunction,(void*)lqpArgs2)!=0){
-        printf("FAILURE: lqput did not work\n");
+    if(pthread_create(&thrd2,NULL,thread_getFunction,lqp)!=0){ 
+        printf("FAILURE: thread 2 did not create\n");
         lqclose(lqp);
         pthread_exit(NULL);
         exit(EXIT_FAILURE);
     }
-    printf("SUCESS:Thread 2 lqput worked\n");
-
-    //free(muffin1);
-    //free(muffin2);
+    printf("SUCESS:Thread 2 created\n");
     
     pthread_join(thrd1,NULL);
     pthread_join(thrd2,NULL);
-    free(lqpArgs);
-    free(lqpArgs2);
     lqclose(lqp);
     pthread_exit(NULL);
     

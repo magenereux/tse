@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <pthread.h>  
 #include <unistd.h>
+#include <errno.h>
 
 // testing: first play around with creating and working with threads
 // then make small queues and check that single and double threads have same output
@@ -55,22 +56,33 @@ int32_t lqput(lqueue_t *qp, void *elementp) {
         return -1;
     }
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp;
+    //pthread_mutex_lock(&(lqp->lock));
     pthread_mutex_lock(&(lqp->lock));
+    sleep(10);
     qput(lqp->q,elementp);
     pthread_mutex_unlock(&(lqp->lock));
+    printf("lqput unlocked!\n");
     return 0;
 }
 
 void* lqget(lqueue_t *qp) { 
-    void* first;
+    void* first = NULL;
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
-        pthread_mutex_lock(&(lqp->lock));
-        first=qget(lqp->q);
-        pthread_mutex_unlock(&(lqp->lock));
-    }
-    else {
-        first=NULL;
+        //pthread_mutex_lock(&(lqp->lock));
+        if (pthread_mutex_trylock(&(lqp->lock))==EBUSY) {
+            printf("lqget: Is busy\n");
+        } else {
+            printf("lqget: Ready to go!\n");
+        
+            first=qget(lqp->q);
+            if (pthread_mutex_unlock(&(lqp->lock))==0) {
+                printf("lqget: successful unlock\n");
+            } else {
+                printf("lqget: unsuccessful unlock\n");
+            }
+            printf("lqget unlocked!\n");
+        }
     }
     return first;
 }
