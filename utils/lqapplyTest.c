@@ -72,6 +72,7 @@ int main (void){
     }
     
     pthread_join(thrd1,NULL);
+    pthread_join(thrd2,NULL);
     free(lqpArg);
     lqclose(lqp);
     
