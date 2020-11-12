@@ -15,6 +15,7 @@ typedef struct muffin {
 }muffin_t;
 
 void* thread_putFunction(lqueue_t *lqp){
+    lqsetdelay(10);
     muffin_t *muffin1=malloc(sizeof(muffin_t));
     strcpy(muffin1->flavor,"blueberry");
     muffin1->price=5.00;
@@ -24,16 +25,13 @@ void* thread_putFunction(lqueue_t *lqp){
 }
 
 void* thread_getFunction(lqueue_t *lqp){
-    sleep(5);
+    lqsetdelay(5);
     // won't work, thread 1 will be busy --> will wait until sleep(10) in put is over -> then gets
     muffin_t *data;
-    while (1) {
-        data=lqget(lqp);
-        if (data != NULL) {
-            printf("%s element gotten\n",data->flavor);
-            free(data);
-            break;
-        } 
+    data=lqget(lqp);
+    if (data != NULL) {
+        printf("%s element gotten\n",data->flavor);
+        free(data);
     }
     return lqp;
 }

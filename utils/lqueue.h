@@ -24,3 +24,5 @@ void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),co
 void* lqremove(lqueue_t *qp,                                                      
               bool (*searchfn)(void* elementp,const void* keyp),                
               const void* skeyp);
+
+void lqsetdelay(int timeDelay);

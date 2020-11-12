@@ -20,6 +20,7 @@
 // then make small queues and check that single and double threads have same output
 // same for hash
 // step 3: then try on crawler and check to run time differences
+static int timeDelay = 0;
 
 typedef struct lqueueStruct {                                                                                                                              
   queue_t *q;   
@@ -43,6 +44,7 @@ void lqclose(lqueue_t *qp) {
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp;
         pthread_mutex_lock(&(lqp->lock));
+        sleep(timeDelay);
         qclose(lqp->q);
         pthread_mutex_unlock(&(lqp->lock));
         pthread_mutex_destroy(&(lqp->lock));
@@ -50,18 +52,17 @@ void lqclose(lqueue_t *qp) {
     }
 }
 
-
 int32_t lqput(lqueue_t *qp, void *elementp) {
     if (qp==NULL || elementp==NULL){
         return -1;
     }
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp;
-    //pthread_mutex_lock(&(lqp->lock));
     pthread_mutex_lock(&(lqp->lock));
-    sleep(10);
+    printf("put locked\n");
+    sleep(timeDelay);
     qput(lqp->q,elementp);
     pthread_mutex_unlock(&(lqp->lock));
-    printf("lqput unlocked!\n");
+    printf("put unlocked\n");
     return 0;
 }
 
@@ -69,20 +70,12 @@ void* lqget(lqueue_t *qp) {
     void* first = NULL;
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
-        //pthread_mutex_lock(&(lqp->lock));
-        if (pthread_mutex_trylock(&(lqp->lock))==EBUSY) {
-            printf("lqget: Is busy\n");
-        } else {
-            printf("lqget: Ready to go!\n");
-        
-            first=qget(lqp->q);
-            if (pthread_mutex_unlock(&(lqp->lock))==0) {
-                printf("lqget: successful unlock\n");
-            } else {
-                printf("lqget: unsuccessful unlock\n");
-            }
-            printf("lqget unlocked!\n");
-        }
+        pthread_mutex_lock(&(lqp->lock));
+        printf("get locked\n");
+        sleep(timeDelay);
+        first=qget(lqp->q);
+        pthread_mutex_unlock(&(lqp->lock));
+        printf("get unlocked\n");
     }
     return first;
 }
@@ -90,17 +83,22 @@ void* lqget(lqueue_t *qp) {
 void lqapply(lqueue_t *qp, void (*fn)(void* elementp)) { 
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
     pthread_mutex_lock(&(lqp->lock));
+    printf("apply locked\n");
+    sleep(timeDelay);
     qapply(lqp->q,fn);
-    sleep(10);
     pthread_mutex_unlock(&(lqp->lock));
+    printf("apply unlocked\n");
 }    
 
 void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp) {     
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
+        printf("search locked\n");
+        sleep(timeDelay);
         void* data = qsearch(lqp->q,searchfn,skeyp);
         pthread_mutex_unlock(&(lqp->lock));
+        printf("search unlocked\n");
         return data;
     }
     return NULL;
@@ -112,6 +110,7 @@ void* lqremove(lqueue_t *qp,
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
+        sleep(timeDelay);
         void* data = qremove(lqp->q,searchfn,skeyp);
         pthread_mutex_unlock(&(lqp->lock));
         return data;
@@ -120,4 +119,7 @@ void* lqremove(lqueue_t *qp,
     
 }
 
+void lqsetdelay(int seconds){
+    timeDelay = seconds;
+}
 
