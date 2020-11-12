@@ -1,7 +1,6 @@
 
 #pragma once
-
-#include "queue.h"                                                              
+                                                          
 #include <stdlib.h>                                                             
 #include <stdio.h>
 #include <pthread.h>  
@@ -21,8 +20,6 @@ void lqapply(lqueue_t *qp, void (*fn)(void* elementp));
 
 void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp);
 
-void* lqremove(lqueue_t *qp,                                                      
-              bool (*searchfn)(void* elementp,const void* keyp),                
-              const void* skeyp);
+void* lqremove(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp);
 
 void lqsetdelay(int timeDelay);

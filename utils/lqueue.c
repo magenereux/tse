@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <pthread.h>  
 #include <unistd.h>
-#include <errno.h>
 
 // testing: first play around with creating and working with threads
 // then make small queues and check that single and double threads have same output
@@ -33,7 +32,6 @@ lqueue_t* lqopen(void) {
     if ((lqp = (lqueueStruct_t *)malloc(sizeof(lqueueStruct_t)))==NULL){
         return NULL;
     }
-    //intialize mutex
     pthread_mutex_init(&(lqp->lock),NULL);
     (lqp->q)= qopen();
     return (lqueue_t*)lqp;
@@ -81,13 +79,15 @@ void* lqget(lqueue_t *qp) {
 }
 
 void lqapply(lqueue_t *qp, void (*fn)(void* elementp)) { 
-    lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
-    pthread_mutex_lock(&(lqp->lock));
-    printf("apply locked\n");
-    sleep(timeDelay);
-    qapply(lqp->q,fn);
-    pthread_mutex_unlock(&(lqp->lock));
-    printf("apply unlocked\n");
+    if (qp!=NULL) {
+        lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
+        pthread_mutex_lock(&(lqp->lock));
+        printf("apply locked\n");
+        sleep(timeDelay);
+        qapply(lqp->q,fn);
+        pthread_mutex_unlock(&(lqp->lock));
+        printf("apply unlocked\n");
+    }
 }    
 
 void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp) {     
@@ -104,15 +104,15 @@ void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),co
     return NULL;
 }
 
-void* lqremove(lqueue_t *qp,                                                      
-              bool (*searchfn)(void* elementp,const void* keyp),                
-              const void* skeyp) {  
+void* lqremove(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),const void* skeyp) {  
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
+        printf("remove locked\n");
         sleep(timeDelay);
         void* data = qremove(lqp->q,searchfn,skeyp);
         pthread_mutex_unlock(&(lqp->lock));
+        printf("remove unlocked\n");
         return data;
     }
     return NULL;
