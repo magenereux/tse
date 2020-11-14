@@ -50,15 +50,15 @@ int main(int argc, char* argv[]){ //ask about how to take in arguments (seedURL,
 	webpage_t *first = webpage_new(argv[1], depth, NULL);
 	// need to allocate memory for first strcopy --> then put in hashtable
 	
-	 int id=1;
-	 int pos = 0;
- 	 char *result;
-	 hashtable_t *h = hopen(200);
-	 queue_t *q= qopen();
-	 hput(h,url,url,strlen(url));
-	 qput(q,first);
-	 webpage_t *wp=qget(q);
-
+	int id=1;
+	int pos = 0;
+ 	char *result;
+	hashtable_t *h = hopen(200);
+	queue_t *q= qopen();
+	hput(h,url,url,strlen(url));
+	qput(q,first);
+	webpage_t *wp=qget(q);
+	
 	 while(wp != NULL){
 		 if (webpage_getDepth(wp)<=maxDepth) {
 			 pos = 0;
