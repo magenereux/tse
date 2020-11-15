@@ -41,11 +41,11 @@ int32_t lhput(lhashtable_t *lhtp, void *ep, const char *key, int keylen) {
     }
     lhashtableStruct_t *lhtsp = (lhashtableStruct_t *)lhtp;
     pthread_mutex_lock(&(lhtsp->lock));
-    printf("put locked\n");
+    //printf("put locked\n");
     sleep(timeDelay);
     hput(lhtsp->lhtable,ep,key,keylen);
     pthread_mutex_unlock(&(lhtsp->lock));
-    printf("put unlocked\n");
+    //printf("put unlocked\n");
     return 0;
 }
 
@@ -53,11 +53,11 @@ void lhapply(lhashtable_t *lhtp, void (*fn)(void* ep)) {
     if (lhtp!=NULL) {
         lhashtableStruct_t *lhtsp = (lhashtableStruct_t *)lhtp; 
         pthread_mutex_lock(&(lhtsp->lock));
-        printf("apply locked\n");
+        //printf("apply locked\n");
         sleep(timeDelay);
         happly(lhtsp->lhtable,fn);
         pthread_mutex_unlock(&(lhtsp->lock));
-        printf("apply unlocked\n");
+        //printf("apply unlocked\n");
     }
 }
 
@@ -65,11 +65,11 @@ void *lhsearch(lhashtable_t *lhtp,bool (*searchfn)(void* elementp, const void* s
     if (lhtp!=NULL){
         lhashtableStruct_t *lhtsp = (lhashtableStruct_t *)lhtp; 
         pthread_mutex_lock(&(lhtsp->lock));
-        printf("search locked\n");
+        //printf("search locked\n");
         sleep(timeDelay);
         void* data = hsearch(lhtsp->lhtable,searchfn,key,keylen);
         pthread_mutex_unlock(&(lhtsp->lock));
-        printf("search unlocked\n");
+        //printf("search unlocked\n");
         return data;
     }
     return NULL;
@@ -79,16 +79,16 @@ void *lhremove(lhashtable_t *lhtp,bool (*searchfn)(void* elementp, const void* s
     if (lhtp!=NULL){
         lhashtableStruct_t *lhtsp = (lhashtableStruct_t *)lhtsp; 
         pthread_mutex_lock(&(lhtsp->lock));
-        printf("remove locked\n");
+        //printf("remove locked\n");
         sleep(timeDelay);
         void* data = hremove(lhtsp->lhtable,searchfn,key,keylen);
         pthread_mutex_unlock(&(lhtsp->lock));
-        printf("remove unlocked\n");
+        //printf("remove unlocked\n");
         return data;
     }
     return NULL;
 }
 
-void lqsetdelay(int seconds){
+void lhsetdelay(int seconds){
     timeDelay = seconds;
 }

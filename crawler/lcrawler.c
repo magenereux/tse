@@ -1,13 +1,3 @@
-/* crawler.c --- 
- * 
- * 
- * Author: Marguerite Genereux
- * Created: Thu Oct 15 09:48:27 2020 (-0400)
- * Version: 
- * 
- * Description: 
- * 
- */
 #include <stdio.h>                                    
 #include <stdlib.h>
 #include <string.h>
@@ -46,18 +36,17 @@ void* thread_getFunction(void *ARG){
 	webpage_t *wp=lqget(ARGS->lqp);
 	while(wp != NULL){
 		if (webpage_getDepth(wp)<=ARGS->maxDepth) {
+			printf("%s\n",webpage_getURL(wp));
 			pos = 0;
-			if(webpage_fetch(wp)){
+			if(webpage_fetch(wp)){ //already has a defined sleep of 1
 				pagesave(wp,id,ARGS->pageDir);
 				id++;
 				while (( pos = webpage_getNextURL(wp, pos, &result)) > 0) {
 					if (IsInternalURL(result)){
 						if (lhsearch(ARGS->htp,searchfn,result,strlen(result))==NULL){
 							webpage_t *newwp = webpage_new(result,webpage_getDepth(wp)+1,NULL);
-							int eval =  lhput(ARGS->htp,result,result,strlen(result)); 
+							lhput(ARGS->htp,result,result,strlen(result)); 
 							lqput(ARGS->lqp,newwp);
-							if(eval==0)
-								printf("%s\n",webpage_getURL(newwp));
 						}else{
 							free(result);
 						}
@@ -68,7 +57,7 @@ void* thread_getFunction(void *ARG){
 			}
 		}
 		webpage_delete(wp);
-		wp=(webpage_t*)qget(ARGS->lqp);
+		wp=(webpage_t*)lqget(ARGS->lqp);
 	}
 	return NULL;
 }
@@ -92,8 +81,6 @@ int main(int argc, char* argv[]){ //ask about how to take in arguments (seedURL,
 	
 	//char *url1 = "https://thayer.github.io/engs50/"; // seedURL argument
 	webpage_t *first = webpage_new(argv[1], depth, NULL);
-	// need to allocate memory for first strcopy --> then put in hashtable
-	
 
 	lhashtable_t *h = lhopen(200);
 	lqueue_t *q= lqopen();
@@ -124,9 +111,8 @@ int main(int argc, char* argv[]){ //ask about how to take in arguments (seedURL,
 		}
 	} 
 
-
-
 	lqclose(q);
 	lhclose(h);
+	free(ARGS);
 	exit(EXIT_SUCCESS);
 }

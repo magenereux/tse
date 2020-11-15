@@ -56,11 +56,11 @@ int32_t lqput(lqueue_t *qp, void *elementp) {
     }
     lqueueStruct_t *lqp = (lqueueStruct_t *)qp;
     pthread_mutex_lock(&(lqp->lock));
-    printf("put locked\n");
+    //printf("put locked\n");
     sleep(timeDelay);
     qput(lqp->q,elementp);
     pthread_mutex_unlock(&(lqp->lock));
-    printf("put unlocked\n");
+    //printf("put unlocked\n");
     return 0;
 }
 
@@ -69,11 +69,11 @@ void* lqget(lqueue_t *qp) {
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
-        printf("get locked\n");
+        //printf("get locked\n");
         sleep(timeDelay);
         first=qget(lqp->q);
         pthread_mutex_unlock(&(lqp->lock));
-        printf("get unlocked\n");
+        //printf("get unlocked\n");
     }
     return first;
 }
@@ -82,11 +82,11 @@ void lqapply(lqueue_t *qp, void (*fn)(void* elementp)) {
     if (qp!=NULL) {
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
-        printf("apply locked\n");
+        //printf("apply locked\n");
         sleep(timeDelay);
         qapply(lqp->q,fn);
         pthread_mutex_unlock(&(lqp->lock));
-        printf("apply unlocked\n");
+        //printf("apply unlocked\n");
     }
 }    
 
@@ -94,11 +94,11 @@ void* lqsearch(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),co
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
-        printf("search locked\n");
+        //printf("search locked\n");
         sleep(timeDelay);
         void* data = qsearch(lqp->q,searchfn,skeyp);
         pthread_mutex_unlock(&(lqp->lock));
-        printf("search unlocked\n");
+        //printf("search unlocked\n");
         return data;
     }
     return NULL;
@@ -108,11 +108,11 @@ void* lqremove(lqueue_t *qp,bool (*searchfn)(void* elementp,const void* keyp),co
     if (qp!=NULL){
         lqueueStruct_t *lqp = (lqueueStruct_t *)qp; 
         pthread_mutex_lock(&(lqp->lock));
-        printf("remove locked\n");
+        //printf("remove locked\n");
         sleep(timeDelay);
         void* data = qremove(lqp->q,searchfn,skeyp);
         pthread_mutex_unlock(&(lqp->lock));
-        printf("remove unlocked\n");
+        //printf("remove unlocked\n");
         return data;
     }
     return NULL;
